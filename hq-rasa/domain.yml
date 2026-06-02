@@ -1,0 +1,130 @@
+version: "3.1"
+
+intents:
+  - greet
+  - goodbye
+  - affirm
+  - deny
+  - bot_challenge
+  - book_appointment
+  - check_queue_status
+  - get_clinic_hours
+  - get_clinic_location
+  - get_clinic_services
+  - cancel_appointment
+  - reschedule_appointment
+  - get_wait_time
+  - get_queue_number
+  - ask_requirements
+  - ask_payment
+  - ask_results
+  - ask_philhealth
+  - ask_hmo
+  - general_health_faq
+  - out_of_scope
+
+entities:
+  - clinic_name
+  - service_name
+  - date
+  - time
+
+slots:
+  clinic_name:
+    type: text
+    mappings:
+      - type: from_entity
+        entity: clinic_name
+  service_name:
+    type: text
+    mappings:
+      - type: from_entity
+        entity: service_name
+
+responses:
+  utter_greet:
+    - text: "Hello! I'm HQ Assistant 👋 I can help you book appointments, check your queue status, find clinic hours, and more. What do you need today?"
+    - text: "Hi there! Welcome to HealthQueue+. How can I assist you today?"
+
+  utter_goodbye:
+    - text: "Take care! Don't hesitate to come back if you need anything. Stay healthy! 😊"
+    - text: "Goodbye! Hope to assist you again soon."
+
+  utter_affirm:
+    - text: "Great! Let me help you with that."
+
+  utter_bot_challenge:
+    - text: "I'm HQ Assistant, an AI chatbot for HealthQueue+. I'm here to help you with your clinic needs!"
+
+  utter_book_appointment:
+    - text: "To book an appointment, tap the **Book Appointment** button on your dashboard and select your preferred clinic, service, date, and time. You'll receive a confirmation once booked. Need help choosing a clinic?"
+    - text: "You can book an appointment directly from the app! Go to your dashboard → Book Appointment → choose your clinic and service. Is there a specific service you're looking for?"
+
+  utter_check_queue_status:
+    - text: "You can check your queue status on your dashboard under **Current Status**. It shows your queue number and estimated wait time in real-time."
+    - text: "Your queue status is visible on the app dashboard. It updates automatically as the clinic serves patients."
+
+  utter_get_wait_time:
+    - text: "Wait times vary by clinic and time of day. You can see the current estimated wait time for each clinic on the **Nearby Clinics** section of your dashboard before joining a queue."
+    - text: "The app shows live wait times per clinic. Typically, wait times are shortest early morning (8–9 AM) or late afternoon. I recommend checking the Recommended Clinics section for the fastest queue near you."
+
+  utter_get_queue_number:
+    - text: "To get a queue number, tap **Get Queue Number** on your dashboard, select the clinic and service, and you'll be assigned a queue number instantly."
+    - text: "You can join a queue directly from the app! Tap Get Queue Number → choose your clinic and service → you're in line!"
+
+  utter_get_clinic_hours:
+    - text: "Hi-Precision Diagnostics branches are generally open **Monday to Saturday, 7:00 AM – 5:00 PM**. Some branches may have extended hours. Please check with your specific branch for exact schedules."
+    - text: "Most Hi-Precision branches operate Monday–Saturday, 7 AM to 5 PM. I recommend calling your preferred branch to confirm their specific hours."
+
+  utter_get_clinic_location:
+    - text: "You can find all nearby clinic locations on the **Nearby Clinics map** in the app. Tap any clinic pin to see its address and get directions. Would you like to know about a specific branch?"
+    - text: "The app has a built-in map showing all Hi-Precision branches near you. Open the dashboard and tap 'Full map' to explore all locations."
+
+  utter_get_clinic_services:
+    - text: "Hi-Precision Diagnostics offers a wide range of services including: Laboratory tests (CBC, urinalysis, blood chemistry), X-ray, ECG, Ultrasound, 2D Echo, Pap Smear, and executive check-up packages. Would you like to know more about a specific service?"
+    - text: "Services available include laboratory tests, imaging (X-ray, ultrasound), ECG, 2D Echo, and various health packages. Which service are you looking for?"
+
+  utter_cancel_appointment:
+    - text: "To cancel an appointment, go to **My Appointments** in the app, find the appointment you want to cancel, and tap the cancel option. Cancellations must be made at least 2 hours before the scheduled time."
+    - text: "You can cancel appointments through the app under your Appointments tab. Please note that cancellations should be done 2 hours in advance to help other patients."
+
+  utter_reschedule_appointment:
+    - text: "To reschedule, go to **My Appointments**, select the appointment, and choose a new date and time. Subject to availability. Need help finding an available slot?"
+    - text: "Rescheduling is done through the My Appointments section of the app. Select your appointment and tap Reschedule to pick a new slot."
+
+  utter_ask_requirements:
+    - text: "Most tests just require a valid ID. For specific tests like fasting blood sugar or lipid profiles, you may need to fast for 8–12 hours. Your doctor's prescription is required for some procedures. Would you like requirements for a specific test?"
+    - text: "Requirements vary by test. Generally you'll need a valid ID and doctor's request form. Some tests require fasting. Which test are you preparing for?"
+
+  utter_ask_payment:
+    - text: "Hi-Precision Diagnostics accepts cash, GCash, Maya, and major credit/debit cards. Payment is made at the clinic. PhilHealth and some HMO plans may cover certain tests — please bring your PhilHealth ID or HMO card."
+    - text: "Accepted payments include cash, GCash, Maya, and major cards. PhilHealth accreditation and HMO coverage may apply to eligible tests."
+
+  utter_ask_results:
+    - text: "Results are typically released within the same day for most tests. Some specialized tests may take 1–3 business days. You can claim results at the clinic or request email delivery for some tests."
+    - text: "Most results are available within the day. The releasing time is usually printed on your official receipt. You may also check if your branch offers digital result delivery."
+
+  utter_ask_philhealth:
+    - text: "Hi-Precision is PhilHealth-accredited. Bring your PhilHealth ID and MDR (Member Data Record). Coverage depends on your benefit package and the tests ordered. Some packages are fully covered, others have co-payments."
+    - text: "Yes, PhilHealth is accepted! Please bring your PhilHealth ID and MDR. Coverage varies per test type — I recommend calling your branch to confirm if your specific test is covered."
+
+  utter_ask_hmo:
+    - text: "Hi-Precision accepts most major HMOs including Maxicare, Medicard, InLife Health, Intellicare, and Philcare. Present your HMO card and Letter of Authorization (LOA) at the clinic. Check with your HMO for coverage details."
+    - text: "Most major HMOs are accepted. Please bring your HMO card and LOA when you visit. Your HMO coordinator can confirm which tests are covered under your plan."
+
+  utter_out_of_scope:
+    - text: "I'm specialized in HealthQueue+ clinic services. For medical advice or other health questions, please consult a licensed doctor. Is there anything else I can help you with regarding your clinic visit?"
+
+  utter_default:
+    - text: "I'm not sure I understood that. I can help you with booking appointments, checking queue status, clinic hours, services, payment, and more. What do you need?"
+    - text: "Sorry, I didn't catch that! You can ask me about appointments, queue status, clinic locations, services, or PhilHealth/HMO coverage."
+
+  utter_iamabot:
+    - text: "I'm HQ Assistant, an AI chatbot for HealthQueue+. I'm here to help you navigate clinic services!"
+
+actions:
+  - action_default_fallback
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true

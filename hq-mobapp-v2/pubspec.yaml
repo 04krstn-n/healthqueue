@@ -1,0 +1,38 @@
+name: hq_mobapp
+description: HealthQueue+ Patient Mobile App
+publish_to: none
+version: 2.0.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.1.2
+  http: ^1.2.1
+  flutter_secure_storage: ^9.0.0
+  shared_preferences: ^2.2.3
+  intl: ^0.19.0
+  google_fonts: ^6.2.1
+  url_launcher: ^6.2.6
+  cupertino_icons: ^1.0.6
+  geolocator: ^13.0.2
+  google_maps_flutter: ^2.9.0
+  google_maps_flutter_platform_interface: ^2.9.1
+  permission_handler: ^11.3.1
+  font_awesome_flutter: ^10.7.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+# Lock the Android implementation to the same era as google_maps_flutter 2.10.1
+# This prevents pub from resolving google_maps_flutter_android 2.19.x (Kotlin 2.3.x)
+dependency_overrides:
+  google_maps_flutter_android: 2.9.0
+  google_maps_flutter_platform_interface: 2.9.1
+
+flutter:
+  uses-material-design: true

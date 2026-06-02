@@ -1,0 +1,137 @@
+version: "3.1"
+
+stories:
+
+- story: greet and help
+  steps:
+    - intent: greet
+    - action: utter_greet
+
+- story: goodbye
+  steps:
+    - intent: goodbye
+    - action: utter_goodbye
+
+- story: book appointment flow
+  steps:
+    - intent: greet
+    - action: utter_greet
+    - intent: book_appointment
+    - action: utter_book_appointment
+
+- story: check queue after greeting
+  steps:
+    - intent: greet
+    - action: utter_greet
+    - intent: check_queue_status
+    - action: utter_check_queue_status
+
+- story: check queue direct
+  steps:
+    - intent: check_queue_status
+    - action: utter_check_queue_status
+
+- story: get queue number
+  steps:
+    - intent: get_queue_number
+    - action: utter_get_queue_number
+
+- story: wait time inquiry
+  steps:
+    - intent: get_wait_time
+    - action: utter_get_wait_time
+
+- story: clinic hours
+  steps:
+    - intent: get_clinic_hours
+    - action: utter_get_clinic_hours
+
+- story: clinic location
+  steps:
+    - intent: get_clinic_location
+    - action: utter_get_clinic_location
+
+- story: clinic services
+  steps:
+    - intent: get_clinic_services
+    - action: utter_get_clinic_services
+
+- story: cancel appointment
+  steps:
+    - intent: cancel_appointment
+    - action: utter_cancel_appointment
+
+- story: reschedule appointment
+  steps:
+    - intent: reschedule_appointment
+    - action: utter_reschedule_appointment
+
+- story: ask requirements
+  steps:
+    - intent: ask_requirements
+    - action: utter_ask_requirements
+
+- story: ask payment
+  steps:
+    - intent: ask_payment
+    - action: utter_ask_payment
+
+- story: ask results
+  steps:
+    - intent: ask_results
+    - action: utter_ask_results
+
+- story: philhealth inquiry
+  steps:
+    - intent: ask_philhealth
+    - action: utter_ask_philhealth
+
+- story: hmo inquiry
+  steps:
+    - intent: ask_hmo
+    - action: utter_ask_hmo
+
+- story: bot challenge
+  steps:
+    - intent: bot_challenge
+    - action: utter_bot_challenge
+
+- story: book then ask wait time
+  steps:
+    - intent: book_appointment
+    - action: utter_book_appointment
+    - intent: get_wait_time
+    - action: utter_get_wait_time
+
+- story: services then book
+  steps:
+    - intent: get_clinic_services
+    - action: utter_get_clinic_services
+    - intent: book_appointment
+    - action: utter_book_appointment
+
+- story: requirements then book
+  steps:
+    - intent: ask_requirements
+    - action: utter_ask_requirements
+    - intent: book_appointment
+    - action: utter_book_appointment
+
+- story: hours then location
+  steps:
+    - intent: get_clinic_hours
+    - action: utter_get_clinic_hours
+    - intent: get_clinic_location
+    - action: utter_get_clinic_location
+
+- story: philhealth then book
+  steps:
+    - intent: ask_philhealth
+    - action: utter_ask_philhealth
+    - intent: book_appointment
+    - action: utter_book_appointment
+
+- story: out of scope
+  steps:
+    - intent: out_of_scope
+    - action: utter_out_of_scope

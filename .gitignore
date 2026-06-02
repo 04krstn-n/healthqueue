@@ -1,0 +1,14 @@
+node_modules/
+.env
+*.env.local
+.DS_Store
+Thumbs.db
+*.log
+build/
+dist/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.g.dart
+*.freezed.dart
+pubspec.lock

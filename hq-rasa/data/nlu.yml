@@ -1,0 +1,311 @@
+version: "3.1"
+
+nlu:
+- intent: greet
+  examples: |
+    - hi
+    - hello
+    - hey
+    - good morning
+    - good afternoon
+    - good evening
+    - hi there
+    - hello there
+    - howdy
+    - hey there
+    - greetings
+    - what's up
+    - sup
+    - musta
+    - kumusta
+    - magandang umaga
+    - magandang hapon
+    - magandang gabi
+
+- intent: goodbye
+  examples: |
+    - bye
+    - goodbye
+    - see you
+    - see you later
+    - take care
+    - ok thanks bye
+    - that's all
+    - nothing else
+    - thank you bye
+    - salamat
+
+- intent: affirm
+  examples: |
+    - yes
+    - yeah
+    - yep
+    - sure
+    - of course
+    - definitely
+    - ok
+    - okay
+    - sounds good
+    - correct
+    - that's right
+    - oo
+    - oo nga
+    - sige
+
+- intent: deny
+  examples: |
+    - no
+    - nope
+    - not really
+    - no thanks
+    - i don't think so
+    - hindi
+    - hindi naman
+
+- intent: bot_challenge
+  examples: |
+    - are you a bot
+    - are you a human
+    - am i talking to a robot
+    - who are you
+    - what are you
+    - are you real
+    - are you AI
+    - are you chatgpt
+
+- intent: book_appointment
+  examples: |
+    - i want to book an appointment
+    - how do i book an appointment
+    - can i schedule a checkup
+    - book appointment
+    - make an appointment
+    - i need to see a doctor
+    - schedule a visit
+    - set an appointment
+    - i want to schedule a lab test
+    - how to book
+    - mag-book ng appointment
+    - gusto ko mag-book
+    - I want to reserve a slot
+    - can I book a [laboratory](service_name) appointment
+    - I need to book an [x-ray](service_name) at [Hi-Precision Makati](clinic_name)
+    - book a [2D echo](service_name)
+    - schedule [ultrasound](service_name) at [Hi-Precision BGC](clinic_name)
+    - I'd like to book a slot for [ECG](service_name)
+    - reserve an appointment for [CBC](service_name)
+
+- intent: check_queue_status
+  examples: |
+    - what is my queue status
+    - check my queue
+    - where am I in the queue
+    - what's my queue number
+    - how many people are ahead of me
+    - update on my queue
+    - queue status
+    - am i still in the queue
+    - what number am i
+    - check queue
+    - how is my queue
+    - is my turn soon
+    - anong number ko na
+    - pila status
+    - pila
+
+- intent: get_wait_time
+  examples: |
+    - how long is the wait
+    - what is the waiting time
+    - how long do I have to wait
+    - estimated wait time
+    - how many minutes to wait
+    - wait time today
+    - is there a long queue
+    - how busy is the clinic
+    - is it crowded
+    - current waiting time
+    - how long is the line
+    - gaano katagal ang pila
+    - matagal ba ang pila
+
+- intent: get_queue_number
+  examples: |
+    - get queue number
+    - i want a queue number
+    - give me a number
+    - how do I get a queue number
+    - join the queue
+    - enter the queue
+    - I want to be in line
+    - pila ako
+    - gusto ko pumila
+    - kumuha ng number
+    - take a number
+
+- intent: get_clinic_hours
+  examples: |
+    - what are the clinic hours
+    - when is the clinic open
+    - operating hours
+    - what time does the clinic open
+    - what time does it close
+    - is the clinic open today
+    - is the clinic open on weekends
+    - open on saturday
+    - open on sunday
+    - clinic schedule
+    - hours of operation
+    - bukas ba ngayon
+    - anong oras bukas
+    - kelan bukas
+
+- intent: get_clinic_location
+  examples: |
+    - where is the clinic
+    - clinic location
+    - how to get to the clinic
+    - address of the clinic
+    - where is [Hi-Precision Makati](clinic_name)
+    - directions to the clinic
+    - nearest clinic
+    - find a clinic near me
+    - saan ang clinic
+    - where is the nearest branch
+    - show me the map
+    - clinic address
+
+- intent: get_clinic_services
+  examples: |
+    - what services are available
+    - what tests can I take
+    - what does the clinic offer
+    - list of services
+    - available tests
+    - do you have [x-ray](service_name)
+    - do you offer [ultrasound](service_name)
+    - is [CBC](service_name) available
+    - what lab tests are available
+    - services offered
+    - what can I get tested for
+    - anong tests meron
+    - available ba ang [ECG](service_name)
+
+- intent: cancel_appointment
+  examples: |
+    - cancel my appointment
+    - i want to cancel
+    - how do i cancel
+    - remove my appointment
+    - delete my booking
+    - I won't make it to my appointment
+    - cancel booking
+    - i need to cancel my schedule
+    - i can't make it
+    - cancel my reservation
+
+- intent: reschedule_appointment
+  examples: |
+    - reschedule my appointment
+    - change my appointment date
+    - move my appointment
+    - I want to change my schedule
+    - can I change the time
+    - reschedule booking
+    - different date please
+    - I need to move my appointment
+    - palitan ang schedule
+
+- intent: ask_requirements
+  examples: |
+    - what do i need to bring
+    - requirements for the test
+    - what should I prepare
+    - do i need to fast
+    - fasting required
+    - what are the requirements
+    - what to bring
+    - preparation for [blood test](service_name)
+    - do i need a prescription
+    - requirements for [CBC](service_name)
+    - what documents do i need
+    - anong dalhin
+
+- intent: ask_payment
+  examples: |
+    - how much does it cost
+    - payment methods
+    - do you accept gcash
+    - can I pay online
+    - accepted payments
+    - how do i pay
+    - cash only
+    - credit card accepted
+    - do you accept maya
+    - price list
+    - how much is [x-ray](service_name)
+    - fees
+    - magkano
+
+- intent: ask_results
+  examples: |
+    - when will my results be ready
+    - how long for results
+    - result releasing
+    - when can I get my results
+    - release of results
+    - how to get my test results
+    - are results available online
+    - email results
+    - release time
+    - kailan lalabas ang result
+
+- intent: ask_philhealth
+  examples: |
+    - do you accept philhealth
+    - philhealth coverage
+    - is philhealth accepted
+    - philhealth benefits
+    - how to use philhealth
+    - philhealth accredited
+    - pwede bang gamitin ang philhealth
+    - philhealth coverage for [laboratory](service_name)
+    - can I use my philhealth card
+
+- intent: ask_hmo
+  examples: |
+    - do you accept HMO
+    - HMO coverage
+    - what HMOs do you accept
+    - is [Maxicare](service_name) accepted
+    - HMO card
+    - letter of authorization
+    - LOA
+    - do you accept [Medicard](service_name)
+    - HMO accredited
+    - can I use my HMO
+    - accepted HMOs
+
+- intent: general_health_faq
+  examples: |
+    - what is CBC
+    - what does CBC check
+    - what is a lipid profile
+    - what is urinalysis
+    - what is ECG for
+    - what is 2D echo
+    - what is ultrasound
+    - normal blood pressure
+    - what is creatinine
+    - what is uric acid test
+    - health question
+
+- intent: out_of_scope
+  examples: |
+    - what is the weather
+    - tell me a joke
+    - what is the stock market
+    - order food
+    - play music
+    - who is the president
+    - what movie should I watch
