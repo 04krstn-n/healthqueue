@@ -3,9 +3,9 @@
  *
  * Status flow:
  *   pending → confirmed → arrived → serving → completed
- *                       → late (patient late)
- *                       → no_show (patient didn't come)
- *                       → cancelled (patient or admin cancelled)
+ *                       → late
+ *                       → no_show
+ *                       → cancelled / rescheduled
  */
 const mongoose = require('mongoose');
 
@@ -17,27 +17,31 @@ const AppointmentSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    // Fixed: Reference User model instead of Patient model
     patient: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Patient',
+      ref: 'User',
       required: true,
       index: true,
     },
-    // Which staff/doctor will handle this appointment
+    // Fixed: Reference User model for staff/doctor
     staff: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Staff',
+      ref: 'User',
       default: null,
     },
-    // Service details (copied from clinic services at booking time)
+    
+    // Service details
     serviceName: { type: String, required: true },
-    serviceId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    serviceId:   { type: mongoose.Schema.Types.ObjectId, default: null },
+    
     // Appointment date and time
     appointmentDate: { type: Date, required: true, index: true },
-    timeSlot: { type: String, required: true }, // e.g. "09:00 AM"
-    endTime: { type: String, default: '' },      // e.g. "09:30 AM"
-    // Patient info (copied at booking for quick display)
-    patientName: { type: String, required: true },
+    timeSlot:        { type: String, required: true }, // e.g. "09:00 AM"
+    endTime:         { type: String, default: '' },      // e.g. "09:30 AM"
+    
+    // Patient info (denormalized for rapid display)
+    patientName:  { type: String, required: true },
     patientPhone: { type: String, default: '' },
     patientType: {
       type: String,
@@ -61,24 +65,27 @@ const AppointmentSchema = new mongoose.Schema(
       index: true,
     },
     reason: { type: String, default: '' },
-    notes: { type: String, default: '' },
-    // If rescheduled, track the original date
-    previousDate: { type: Date, default: null },
+    notes:  { type: String, default: '' },
+    
+    // Tracking reschedule history
+    previousDate:     { type: Date, default: null },
     previousTimeSlot: { type: String, default: null },
-    // Reminder sent?
+    
     reminderSent: { type: Boolean, default: false },
-    // Linked to a queue entry when patient arrives
+    
+    // Linked queue entry when patient checks in on-site
     queueEntry: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'QueueEntry',
       default: null,
     },
+    
     // Timestamps
-    confirmedAt: { type: Date, default: null },
-    arrivedAt: { type: Date, default: null },
-    completedAt: { type: Date, default: null },
-    cancelledAt: { type: Date, default: null },
-    cancelledBy: { type: String, default: null }, // 'patient' | 'staff' | 'admin'
+    confirmedAt:        { type: Date, default: null },
+    arrivedAt:          { type: Date, default: null },
+    completedAt:        { type: Date, default: null },
+    cancelledAt:        { type: Date, default: null },
+    cancelledBy:        { type: String, default: null }, // 'patient' | 'staff' | 'admin'
     cancellationReason: { type: String, default: '' },
   },
   { timestamps: true }

@@ -3,7 +3,7 @@
  */
 const SystemConfig = require('../models/SystemConfig');
 
-// GET /api/config — list all config entries
+// GET /api/config
 const getConfigs = async (req, res) => {
   try {
     const configs = await SystemConfig.find().sort({ group: 1, key: 1 });
@@ -13,7 +13,7 @@ const getConfigs = async (req, res) => {
   }
 };
 
-// GET /api/config/:key — get one by key
+// GET /api/config/:key
 const getConfig = async (req, res) => {
   try {
     const cfg = await SystemConfig.findOne({ key: req.params.key });
@@ -24,11 +24,12 @@ const getConfig = async (req, res) => {
   }
 };
 
-// PUT /api/config/:id — update a config entry by _id
+// PUT /api/config/:id
 const updateConfig = async (req, res) => {
   try {
     const { value } = req.body;
     if (value === undefined) return res.status(400).json({ message: 'value is required.' });
+
     const cfg = await SystemConfig.findByIdAndUpdate(
       req.params.id,
       { value },
@@ -41,14 +42,28 @@ const updateConfig = async (req, res) => {
   }
 };
 
-// POST /api/config — create a new config entry
+// POST /api/config
 const createConfig = async (req, res) => {
   try {
     const { key, value, label, description, group } = req.body;
-    if (!key || value === undefined) return res.status(400).json({ message: 'key and value are required.' });
-    const existing = await SystemConfig.findOne({ key });
-    if (existing) return res.status(409).json({ message: `Config key "${key}" already exists.` });
-    const cfg = await SystemConfig.create({ key, value, label: label || key, description: description || '', group: group || 'General' });
+    if (!key || value === undefined) {
+      return res.status(400).json({ message: 'key and value are required.' });
+    }
+
+    const normalizedKey = key.trim();
+    const existing = await SystemConfig.findOne({ key: normalizedKey });
+    if (existing) {
+      return res.status(409).json({ message: `Config key "${normalizedKey}" already exists.` });
+    }
+
+    const cfg = await SystemConfig.create({
+      key: normalizedKey,
+      value,
+      label: label || normalizedKey,
+      description: description || '',
+      group: group || 'General',
+    });
+
     return res.status(201).json(cfg);
   } catch (err) {
     return res.status(500).json({ message: 'Failed to create config.' });

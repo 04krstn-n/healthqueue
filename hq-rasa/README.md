@@ -13,7 +13,7 @@ Handles: booking, queue status, clinic hours, services, payments, PhilHealth/HMO
 cd hq-rasa
 
 # 1. Create virtual environment
-python -m venv venv
+py -m venv venv
 
 # Windows
 venv\Scripts\activate

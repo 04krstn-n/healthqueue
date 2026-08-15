@@ -11,23 +11,25 @@ const TimeSlotSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    serviceId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    serviceId:   { type: mongoose.Schema.Types.ObjectId, default: null },
     serviceName: { type: String, required: true },
     staff: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Staff',
+      ref: 'User', // Refers to User model
       default: null,
     },
-    // Day of week (0=Sunday, 6=Saturday) or specific date
-    dayOfWeek: { type: Number, min: 0, max: 6, default: null },
-    specificDate: { type: Date, default: null }, // overrides dayOfWeek if set
-    startTime: { type: String, required: true }, // "09:00"
-    endTime: { type: String, required: true },   // "09:30"
-    label: { type: String, required: true },     // "9:00 AM"
-    maxPatients: { type: Number, default: 1 },
-    isActive: { type: Boolean, default: true },
+    dayOfWeek:    { type: Number, min: 0, max: 6, default: null }, // 0=Sunday
+    specificDate: { type: Date, default: null },
+    startTime:    { type: String, required: true }, // "09:00"
+    endTime:      { type: String, required: true },   // "09:30"
+    label:        { type: String, required: true },     // "9:00 AM"
+    maxPatients:  { type: Number, default: 1 },
+    bookedCount:  { type: Number, default: 0 },
+    isActive:     { type: Boolean, default: true },
   },
   { timestamps: true }
 );
+
+TimeSlotSchema.index({ clinic: 1, specificDate: 1, isActive: 1 });
 
 module.exports = mongoose.model('TimeSlot', TimeSlotSchema);

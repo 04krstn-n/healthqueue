@@ -1,6 +1,8 @@
 version: "3.1"
 
 nlu:
+
+# ── Core Greetings / Closings ────────────────────────────────────────────────
 - intent: greet
   examples: |
     - hi
@@ -21,6 +23,22 @@ nlu:
     - magandang umaga
     - magandang hapon
     - magandang gabi
+    - hello hq
+    - hi assistant
+    - start
+    - hello po
+    - hi po
+    - good morning po
+    - kamusta
+    - hey po
+    - hi can you help me
+    - hello i need help
+    - help
+    - need help
+    - i need assistance
+    - can you help me
+    - makakatulong ka ba
+    - tulungan mo ako
 
 - intent: goodbye
   examples: |
@@ -34,6 +52,17 @@ nlu:
     - nothing else
     - thank you bye
     - salamat
+    - thanks
+    - thank you
+    - ok lang na
+    - wala na
+    - done na
+    - ok thank you
+    - thanks po
+    - salamat po
+    - sige bye
+    - ok noted thanks
+    - got it thanks
 
 - intent: affirm
   examples: |
@@ -51,6 +80,13 @@ nlu:
     - oo
     - oo nga
     - sige
+    - go ahead
+    - please proceed
+    - yes please
+    - oo po
+    - sige po
+    - tama
+    - confirmed
 
 - intent: deny
   examples: |
@@ -61,6 +97,14 @@ nlu:
     - i don't think so
     - hindi
     - hindi naman
+    - nah
+    - not now
+    - cancel that
+    - never mind
+    - nevermind
+    - hindi po
+    - wag na
+    - no need
 
 - intent: bot_challenge
   examples: |
@@ -72,28 +116,54 @@ nlu:
     - are you real
     - are you AI
     - are you chatgpt
+    - are you human
+    - robot ba ikaw
+    - are you an AI
+    - is this a chatbot
+    - chatbot ka ba
+    - what is your name
+    - ano pangalan mo
+    - sino ka
+    - ikaw ba ay AI
 
-- intent: book_appointment
+# ── Queue ────────────────────────────────────────────────────────────────────
+- intent: join_queue
   examples: |
-    - i want to book an appointment
-    - how do i book an appointment
-    - can i schedule a checkup
-    - book appointment
-    - make an appointment
-    - i need to see a doctor
-    - schedule a visit
-    - set an appointment
-    - i want to schedule a lab test
-    - how to book
-    - mag-book ng appointment
-    - gusto ko mag-book
-    - I want to reserve a slot
-    - can I book a [laboratory](service_name) appointment
-    - I need to book an [x-ray](service_name) at [Hi-Precision Makati](clinic_name)
-    - book a [2D echo](service_name)
-    - schedule [ultrasound](service_name) at [Hi-Precision BGC](clinic_name)
-    - I'd like to book a slot for [ECG](service_name)
-    - reserve an appointment for [CBC](service_name)
+    - I want to join the queue
+    - join queue
+    - add me to the queue
+    - put me in line
+    - get me a queue number
+    - I want to line up
+    - pila ako
+    - gusto kong pumila
+    - magpapila na ako
+    - kumuha ng queue number
+    - I'd like to take a number
+    - sign me up for the queue
+    - can I get in line
+    - pumila na ko
+    - paano mag queue
+    - how do I queue
+    - gusto ko pumila para sa [CBC](service_name)
+    - I want to join the [laboratory](service_name) queue
+    - join queue for [X-ray](service_name)
+
+- intent: cancel_queue
+  examples: |
+    - cancel my queue
+    - remove me from the queue
+    - I want to leave the queue
+    - cancel queue number
+    - I don't want to be in line anymore
+    - exit queue
+    - cancel my spot
+    - alisin ako sa pila
+    - gusto kong umalis sa pila
+    - drop my queue
+    - I changed my mind
+    - ayaw ko na pumila
+    - cancel pila ko
 
 - intent: check_queue_status
   examples: |
@@ -102,18 +172,22 @@ nlu:
     - where am I in the queue
     - what's my queue number
     - how many people are ahead of me
-    - update on my queue
     - queue status
     - am i still in the queue
     - what number am i
     - check queue
-    - how is my queue
     - is my turn soon
     - anong number ko na
     - pila status
-    - pila
+    - how far am I in line
+    - what position am I in
+    - ilang tao pa bago sa akin
+    - check ko yung queue ko
+    - status ng queue ko
+    - where am I in line
+    - my queue
 
-- intent: get_wait_time
+- intent: estimated_wait_time
   examples: |
     - how long is the wait
     - what is the waiting time
@@ -124,10 +198,17 @@ nlu:
     - is there a long queue
     - how busy is the clinic
     - is it crowded
-    - current waiting time
     - how long is the line
     - gaano katagal ang pila
     - matagal ba ang pila
+    - when will it be my turn
+    - how long until I'm called
+    - gaano katagal pa
+    - ilang minuto pa
+    - rough estimate ng wait time
+    - eta
+    - how many minutes
+    - waiting time
 
 - intent: get_queue_number
   examples: |
@@ -135,15 +216,14 @@ nlu:
     - i want a queue number
     - give me a number
     - how do I get a queue number
-    - join the queue
-    - enter the queue
-    - I want to be in line
-    - pila ako
-    - gusto ko pumila
+    - how to get in line
+    - assign me a queue number
     - kumuha ng number
     - take a number
+    - paano kumuha ng number
 
-- intent: get_clinic_hours
+# ── Clinic Info ──────────────────────────────────────────────────────────────
+- intent: clinic_hours
   examples: |
     - what are the clinic hours
     - when is the clinic open
@@ -153,12 +233,34 @@ nlu:
     - is the clinic open today
     - is the clinic open on weekends
     - open on saturday
-    - open on sunday
     - clinic schedule
     - hours of operation
     - bukas ba ngayon
     - anong oras bukas
     - kelan bukas
+    - clinic hours today
+    - what time open
+    - what time close
+    - schedule ng clinic
+    - open ba bukas
+    - bukas pa ba sila ngayon
+
+- intent: nearest_clinic
+  examples: |
+    - where is the nearest clinic
+    - find a clinic near me
+    - nearest branch
+    - closest clinic
+    - clinics nearby
+    - show me nearby clinics
+    - branch near me
+    - saan ang pinakamalapit na clinic
+    - nearest Hi-Precision
+    - where can I find a branch
+    - malapit na clinic
+    - where to find clinic
+    - find clinic
+    - clinic saan
 
 - intent: get_clinic_location
   examples: |
@@ -166,14 +268,14 @@ nlu:
     - clinic location
     - how to get to the clinic
     - address of the clinic
-    - where is [Hi-Precision Makati](clinic_name)
     - directions to the clinic
-    - nearest clinic
-    - find a clinic near me
-    - saan ang clinic
-    - where is the nearest branch
     - show me the map
     - clinic address
+    - saan ang clinic
+    - address
+    - location
+    - map
+    - saan kayo
 
 - intent: get_clinic_services
   examples: |
@@ -182,27 +284,69 @@ nlu:
     - what does the clinic offer
     - list of services
     - available tests
-    - do you have [x-ray](service_name)
-    - do you offer [ultrasound](service_name)
-    - is [CBC](service_name) available
+    - do you have x-ray
+    - do you offer ultrasound
+    - is CBC available
     - what lab tests are available
     - services offered
     - what can I get tested for
     - anong tests meron
-    - available ba ang [ECG](service_name)
+    - available services
+    - what tests do you do
+    - anong available
+    - services nyo
+
+# ── Appointment ──────────────────────────────────────────────────────────────
+- intent: appointment_inquiry
+  examples: |
+    - how does appointment work
+    - tell me about appointments
+    - can I book in advance
+    - do I need an appointment
+    - is walk-in available
+    - appointment or walk-in
+    - do I need to book ahead
+    - can I just walk in
+    - walk-in ba pwede
+    - kailangan bang mag-book
+    - pwede bang walk-in
+    - may appointment ba kayo
+    - how to make appointment
+
+- intent: book_appointment
+  examples: |
+    - i want to book an appointment
+    - how do i book an appointment
+    - can i schedule a checkup
+    - book appointment
+    - make an appointment
+    - schedule a visit
+    - set an appointment
+    - i want to schedule a lab test
+    - how to book
+    - mag-book ng appointment
+    - gusto ko mag-book
+    - I want to reserve a slot
+    - book a slot
+    - reserve a schedule
+    - mag schedule ako
+    - i need an appointment
+    - can I book today
+    - how to book online
 
 - intent: cancel_appointment
   examples: |
     - cancel my appointment
-    - i want to cancel
+    - i want to cancel my appointment
     - how do i cancel
     - remove my appointment
     - delete my booking
     - I won't make it to my appointment
     - cancel booking
     - i need to cancel my schedule
-    - i can't make it
     - cancel my reservation
+    - I-cancel ang appointment ko
+    - gusto kong i-cancel ang appointment
 
 - intent: reschedule_appointment
   examples: |
@@ -215,7 +359,10 @@ nlu:
     - different date please
     - I need to move my appointment
     - palitan ang schedule
+    - can I reschedule
+    - change my booking date
 
+# ── Requirements / Preparation ───────────────────────────────────────────────
 - intent: ask_requirements
   examples: |
     - what do i need to bring
@@ -225,11 +372,18 @@ nlu:
     - fasting required
     - what are the requirements
     - what to bring
-    - preparation for [blood test](service_name)
     - do i need a prescription
-    - requirements for [CBC](service_name)
     - what documents do i need
     - anong dalhin
+    - kailangan ba mag-fast
+    - requirements
+    - preparation
+    - what do I need
+    - anong kailangan
+    - do I need to fast before blood test
+    - magfa-fast ba ako
+    - requirements for CBC
+    - what to prepare
 
 - intent: ask_payment
   examples: |
@@ -243,9 +397,18 @@ nlu:
     - credit card accepted
     - do you accept maya
     - price list
-    - how much is [x-ray](service_name)
     - fees
     - magkano
+    - how much
+    - presyo
+    - payment
+    - how much is x-ray
+    - magkano ang CBC
+    - bayad
+    - pwede GCash
+    - gcash ba
+    - bayad paano
+    - payment options
 
 - intent: ask_results
   examples: |
@@ -253,12 +416,18 @@ nlu:
     - how long for results
     - result releasing
     - when can I get my results
-    - release of results
     - how to get my test results
     - are results available online
-    - email results
     - release time
     - kailan lalabas ang result
+    - result ko
+    - when are results out
+    - results
+    - anong oras lalabas ang result
+    - kailan ko makukuha ang result
+    - result releasing time
+    - same day ba ang result
+    - how long to get results
 
 - intent: ask_philhealth
   examples: |
@@ -269,23 +438,30 @@ nlu:
     - how to use philhealth
     - philhealth accredited
     - pwede bang gamitin ang philhealth
-    - philhealth coverage for [laboratory](service_name)
-    - can I use my philhealth card
+    - philhealth
+    - PhilHealth
+    - may PhilHealth ka ba
+    - covered ng philhealth
+    - philhealth ba ito
 
 - intent: ask_hmo
   examples: |
     - do you accept HMO
     - HMO coverage
     - what HMOs do you accept
-    - is [Maxicare](service_name) accepted
     - HMO card
     - letter of authorization
     - LOA
-    - do you accept [Medicard](service_name)
-    - HMO accredited
     - can I use my HMO
+    - HMO accredited
+    - HMO
     - accepted HMOs
+    - Maxicare
+    - Medicard
+    - pwede ang HMO
+    - HMO ba pwede
 
+# ── General Health FAQ ───────────────────────────────────────────────────────
 - intent: general_health_faq
   examples: |
     - what is CBC
@@ -295,11 +471,15 @@ nlu:
     - what is ECG for
     - what is 2D echo
     - what is ultrasound
-    - normal blood pressure
     - what is creatinine
     - what is uric acid test
-    - health question
+    - what is blood pressure
+    - normal blood pressure
+    - what is cholesterol test
+    - what is fasting blood sugar
+    - FBS test
 
+# ── Out of scope ─────────────────────────────────────────────────────────────
 - intent: out_of_scope
   examples: |
     - what is the weather
@@ -309,3 +489,5 @@ nlu:
     - play music
     - who is the president
     - what movie should I watch
+    - random question
+    - unrelated topic

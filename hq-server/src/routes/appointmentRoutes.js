@@ -1,14 +1,14 @@
 const express = require('express');
-const router  = express.Router();
+const router = express.Router();
 
 const {
   getMyAppointments,
   cancelMyAppointment,
   bookAppointment,
+  updateAppointment,
   getAppointments,
   getAppointment,
   updateStatus,
-  cancelAppointment,
   getAvailableSlots,
   getTodayAppointments,
   getTimeSlots,
@@ -21,30 +21,41 @@ const { protect, authorizeRoles, patientOnly } = require('../middleware/auth');
 
 router.use(protect);
 
-// ── Time Slots (admin/facility_admin) ─────────────────────────────────────────
-router.get('/timeslots',        authorizeRoles('super_admin', 'facility_admin'), getTimeSlots);
-router.post('/timeslots',       authorizeRoles('super_admin', 'facility_admin'), createTimeSlot);
-router.put('/timeslots/:id',    authorizeRoles('super_admin', 'facility_admin'), updateTimeSlot);
-router.delete('/timeslots/:id', authorizeRoles('super_admin', 'facility_admin'), deleteTimeSlot);
+// ── 1. Static Sub-Routes (Must precede parametric /:id routes) ───────────────
 
-// ── Available Slots ───────────────────────────────────────────────────────────
+// Time Slots Configuration (admin/facility_admin)
+router
+  .route('/timeslots')
+  .get(authorizeRoles('super_admin', 'facility_admin'), getTimeSlots)
+  .post(authorizeRoles('super_admin', 'facility_admin'), createTimeSlot);
+
+router
+  .route('/timeslots/:id')
+  .put(authorizeRoles('super_admin', 'facility_admin'), updateTimeSlot)
+  .delete(authorizeRoles('super_admin', 'facility_admin'), deleteTimeSlot);
+
+// Slot Availability (patients and staff)
 router.get('/available-slots', getAvailableSlots);
 
-// ── Patient: my appointments ──────────────────────────────────────────────────
-router.get('/my', getMyAppointments);
+// Patient Specific Dashboard
+router.get('/my', patientOnly, getMyAppointments);
 
-// ── Today (staff/admin) ───────────────────────────────────────────────────────
+// Staff/Admin Today's View
 router.get('/today', authorizeRoles('staff', 'facility_admin', 'super_admin'), getTodayAppointments);
 
-// ── List / Book ───────────────────────────────────────────────────────────────
-router.get('/',  getAppointments);
-router.post('/', patientOnly, bookAppointment);
+// ── 2. Base Collection Routes ───────────────────────────────────────────────
 
-// ── Single ────────────────────────────────────────────────────────────────────
-router.get('/:id', getAppointment);
+router
+  .route('/')
+  .get(authorizeRoles('staff', 'facility_admin', 'super_admin'), getAppointments)
+  .post(patientOnly, bookAppointment);
 
-// ── Status / Cancel ───────────────────────────────────────────────────────────
+// ── 3. Parametric Individual Item Routes ─────────────────────────────────────
+
+router.get('/:id', getAppointment); 
+router.put('/:id', updateAppointment); // Handles rescheduling & general updates
 router.put('/:id/status', authorizeRoles('staff', 'facility_admin', 'super_admin'), updateStatus);
-router.put('/:id/cancel', cancelMyAppointment);
+router.put('/:id/cancel', cancelMyAppointment); 
+router.put('/:id/cancel-my', cancelMyAppointment); 
 
 module.exports = router;

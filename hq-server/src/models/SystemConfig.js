@@ -1,5 +1,5 @@
 /**
- * SystemConfig model — key/value system settings (singleton-style)
+ * SystemConfig model — key/value system settings
  */
 const mongoose = require('mongoose');
 

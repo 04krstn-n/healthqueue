@@ -25,14 +25,23 @@ const ClinicSchema = new mongoose.Schema(
     city:          { type: String, default: '' },
     province:      { type: String, default: '' },
     region:        { type: String, default: 'NCR' },
+    
+    // Geolocation Coordinates
     latitude:      { type: Number, default: 0 },
     longitude:     { type: Number, default: 0 },
+    location: {
+      type: { type: String, enum: ['Point'], default: 'Point' },
+      coordinates: { type: [Number], default: [0, 0] }, // [longitude, latitude]
+    },
+
     contactNumber: { type: String, default: '' },
     email:         { type: String, default: '' },
-    facilityType:  { type: String, default: 'Diagnostic Center' },
+    facilityType:  { type: String, default: 'Private Clinic' },
     operatingHours:{ type: String, default: '8:00 AM - 5:00 PM' },
-    // Embedded services — single unified schema
+    
+    // Embedded services
     services: [ServiceSchema],
+    
     status: {
       type: String,
       enum: ['open', 'closed', 'busy', 'maintenance', 'active', 'inactive'],
@@ -41,12 +50,15 @@ const ClinicSchema = new mongoose.Schema(
     maxQueueCapacity:     { type: Number, default: 100 },
     acceptsWalkIn:        { type: Boolean, default: true },
     acceptsAppointment:   { type: Boolean, default: true },
-    // Live queue stats (updated by queue operations)
+    
+    // Live queue stats
     queueLength:          { type: Number, default: 0 },
     currentWaitingTime:   { type: Number, default: 0 },
     baseWaitTimePerPerson:{ type: Number, default: 10 },
+    
     // AI forecasting
     peakHours: [PeakHourSchema],
+    
     // Admin link
     facilityAdmin:{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     isActive:     { type: Boolean, default: true },
@@ -56,5 +68,6 @@ const ClinicSchema = new mongoose.Schema(
 
 ClinicSchema.index({ name: 1 });
 ClinicSchema.index({ city: 1, isActive: 1 });
+ClinicSchema.index({ location: '2dsphere' }); // Geo-spatial index for nearest clinic detection
 
 module.exports = mongoose.model('Clinic', ClinicSchema);

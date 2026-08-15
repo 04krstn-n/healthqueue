@@ -4,8 +4,9 @@ const { getMyNotifications, markRead, markAllRead } = require('../controllers/no
 const { protect } = require('../middleware/auth');
 
 router.use(protect);
-router.get('/',              getMyNotifications);
-router.put('/read-all',      markAllRead);
-router.put('/:id/read',      markRead);
+
+router.get('/', getMyNotifications);
+router.put('/read-all', markAllRead);
+router.put('/:id/read', markRead);
 
 module.exports = router;

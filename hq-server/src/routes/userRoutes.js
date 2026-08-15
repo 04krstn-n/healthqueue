@@ -1,25 +1,37 @@
 const express = require('express');
-const router  = express.Router();
+const router = express.Router();
 const {
-  getUsers, getUser, createUser, updateUser, deactivateUser,
-  getMyPatientProfile, updateMyPatientProfile, changePassword,
+  getUsers,
+  getUser,
+  createUser,
+  updateUser,
+  deactivateUser,
+  getMyPatientProfile,
+  updateMyPatientProfile,
+  changePassword,
 } = require('../controllers/userController');
-const { protect, adminOnly } = require('../middleware/auth');
+const { protect, authorizeRoles } = require('../middleware/auth');
 
 router.use(protect);
 
-// ── Patient's own profile ─────────────────────────────────────────────────────
-router.get('/profile',          getMyPatientProfile);
-router.put('/profile',          updateMyPatientProfile);
-router.put('/change-password',  changePassword);
+// ─── Current Logged-in User Endpoints ─────────────────────────────────────────
+router.put('/change-password', changePassword);
 
-// ── Admin-only user management ─────────────────────────────────────────────────
-router.use(adminOnly);
-router.get('/',            getUsers);
-router.post('/',           createUser);
-router.post('/create',     createUser);
-router.get('/:id',         getUser);
-router.put('/:id',         updateUser);
-router.delete('/:id',      deactivateUser);
+router
+  .route('/me/patient')
+  .get(getMyPatientProfile)
+  .put(updateMyPatientProfile);
+
+// ─── Admin User Management Endpoints ──────────────────────────────────────────
+router
+  .route('/')
+  .get(authorizeRoles('facility_admin', 'super_admin'), getUsers)
+  .post(authorizeRoles('facility_admin', 'super_admin'), createUser);
+
+router
+  .route('/:id')
+  .get(authorizeRoles('facility_admin', 'super_admin'), getUser)
+  .put(authorizeRoles('facility_admin', 'super_admin'), updateUser)
+  .delete(authorizeRoles('facility_admin', 'super_admin'), deactivateUser);
 
 module.exports = router;

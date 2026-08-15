@@ -1,22 +1,29 @@
 /**
- * Global error handler middleware
+ * Global Error Handler Middleware
  */
+const { HttpStatus, NODE_ENV } = require('../config/config');
 
-// 404 catcher
+// 404 Catcher
 const notFound = (req, res, next) => {
   const error = new Error(`Route not found: ${req.originalUrl}`);
-  res.status(404);
+  res.status(HttpStatus.NOT_FOUND);
   next(error);
 };
 
-// Global error responder
+// Global Error Responder
 const errorHandler = (err, req, res, next) => {
-  const statusCode = res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
+  const statusCode =
+    res.statusCode && res.statusCode !== HttpStatus.OK
+      ? res.statusCode
+      : HttpStatus.INTERNAL_SERVER_ERROR;
+
   console.error(`[ERROR] ${err.message}`);
+
   res.status(statusCode).json({
+    success: false,
     message: err.message || 'Internal server error',
-    // Only show stack trace in development
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    // Include stack trace only in development mode
+    ...(NODE_ENV === 'development' && { stack: err.stack }),
   });
 };
 

@@ -1,12 +1,15 @@
-const express  = require('express');
-const router   = express.Router();
+const express = require('express');
+const router = express.Router();
 const { getAiInsights } = require('../controllers/analyticsController');
 const { protect, authorizeRoles } = require('../middleware/auth');
 
-// Facility admin only
 router.use(protect);
-router.use(authorizeRoles('facility_admin', 'admin', 'superadmin'));
 
-router.get('/ai-insights', getAiInsights);
+// Restricted to facility and system admins
+router.get(
+  '/ai-insights',
+  authorizeRoles('facility_admin', 'super_admin'),
+  getAiInsights
+);
 
 module.exports = router;

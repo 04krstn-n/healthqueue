@@ -9,6 +9,7 @@ const PatientSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       default: null,
+      index: true,
     },
     fullName:         { type: String, required: true, trim: true },
     dob:              { type: Date,   default: null },

@@ -2,6 +2,7 @@
  * Notification Controller
  */
 const Notification = require('../models/Notification');
+const { HttpStatus } = require('../config/config');
 
 // GET /api/notifications — get current user's notifications
 const getMyNotifications = async (req, res) => {
@@ -9,22 +10,24 @@ const getMyNotifications = async (req, res) => {
     const notifications = await Notification.find({ user: req.user._id })
       .sort({ createdAt: -1 })
       .limit(50);
-    return res.json(notifications);
+    return res.status(HttpStatus.OK).json({ success: true, data: notifications });
   } catch (err) {
-    return res.status(500).json({ message: 'Failed to get notifications.' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to get notifications.' });
   }
 };
 
 // PUT /api/notifications/:id/read — mark as read
 const markRead = async (req, res) => {
   try {
-    await Notification.findOneAndUpdate(
+    const notif = await Notification.findOneAndUpdate(
       { _id: req.params.id, user: req.user._id },
-      { isRead: true }
+      { isRead: true },
+      { new: true }
     );
-    return res.json({ message: 'Marked as read.' });
+    if (!notif) return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: 'Notification not found.' });
+    return res.status(HttpStatus.OK).json({ success: true, message: 'Marked as read.', data: notif });
   } catch (err) {
-    return res.status(500).json({ message: 'Failed to mark notification.' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to mark notification.' });
   }
 };
 
@@ -32,9 +35,9 @@ const markRead = async (req, res) => {
 const markAllRead = async (req, res) => {
   try {
     await Notification.updateMany({ user: req.user._id, isRead: false }, { isRead: true });
-    return res.json({ message: 'All notifications marked as read.' });
+    return res.status(HttpStatus.OK).json({ success: true, message: 'All notifications marked as read.' });
   } catch (err) {
-    return res.status(500).json({ message: 'Failed to mark all notifications.' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to mark all notifications.' });
   }
 };
 

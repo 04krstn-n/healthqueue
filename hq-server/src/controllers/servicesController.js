@@ -1,49 +1,88 @@
 /**
- * Services Controller — manage clinic services
- * Services are embedded in the Clinic document.
- * Used by: facility_admin (own clinic), super_admin (any)
+ * Services Controller — manage clinic services (embedded in Clinic document)
+ * Access: facility_admin (own clinic), super_admin (any)
  */
 const Clinic = require('../models/Clinic');
 
-// GET /api/services?clinicId=xxx — list services for a clinic
+// Helper for tenant checking
+const isUnauthorizedClinic = (req, targetClinicId) => {
+  if (req.user.role === 'super_admin') return false;
+  return req.user.clinicId?.toString() !== targetClinicId?.toString();
+};
+
+// GET /api/services?clinicId=xxx
 const getServices = async (req, res) => {
   try {
     const clinicId = req.query.clinicId || req.user.clinicId;
     if (!clinicId) return res.status(400).json({ message: 'clinicId is required.' });
 
+    if (isUnauthorizedClinic(req, clinicId)) {
+      return res.status(403).json({ message: 'Access denied to this clinic.' });
+    }
+
     const clinic = await Clinic.findById(clinicId).select('name services');
     if (!clinic) return res.status(404).json({ message: 'Clinic not found.' });
+
     return res.json({ clinicId: clinic._id, clinicName: clinic.name, services: clinic.services });
   } catch (err) {
     return res.status(500).json({ message: 'Failed to fetch services.' });
   }
 };
 
-// POST /api/services — add a service to a clinic
+// POST /api/services
 const addService = async (req, res) => {
   try {
     const { clinicId, name, description, durationMinutes, isAvailable } = req.body;
-    const cId = clinicId || req.user.clinicId;
-    if (!cId || !name) return res.status(400).json({ message: 'clinicId and name are required.' });
+    const targetClinicId = clinicId || req.user.clinicId;
 
-    const clinic = await Clinic.findById(cId);
-    if (!clinic) return res.status(404).json({ message: 'Clinic not found.' });
+    if (!targetClinicId || !name) {
+      return res.status(400).json({ message: 'clinicId and name are required.' });
+    }
 
-    const newService = { name: name.trim(), description: description || '', durationMinutes: durationMinutes || 30, isAvailable: isAvailable !== false };
-    clinic.services.push(newService);
-    await clinic.save();
+    if (isUnauthorizedClinic(req, targetClinicId)) {
+      return res.status(403).json({ message: 'Access denied.' });
+    }
 
-    const added = clinic.services[clinic.services.length - 1];
-    return res.status(201).json(added);
+    const trimmedName = name.trim();
+
+    // Prevent duplicates & push atomically
+    const clinic = await Clinic.findOneAndUpdate(
+      { _id: targetClinicId, 'services.name': { $ne: trimmedName } },
+      {
+        $push: {
+          services: {
+            name: trimmedName,
+            description: description?.trim() || '',
+            durationMinutes: durationMinutes || 30,
+            isAvailable: isAvailable !== false,
+          },
+        },
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!clinic) {
+      const exists = await Clinic.findById(targetClinicId);
+      if (!exists) return res.status(404).json({ message: 'Clinic not found.' });
+      return res.status(409).json({ message: 'Service with this name already exists.' });
+    }
+
+    const addedService = clinic.services[clinic.services.length - 1];
+    return res.status(201).json(addedService);
   } catch (err) {
     return res.status(500).json({ message: 'Failed to add service.' });
   }
 };
 
-// PUT /api/services/:clinicId/:serviceId — update a service
+// PUT /api/services/:clinicId/:serviceId
 const updateService = async (req, res) => {
   try {
     const { clinicId, serviceId } = req.params;
+
+    if (isUnauthorizedClinic(req, clinicId)) {
+      return res.status(403).json({ message: 'Access denied.' });
+    }
+
     const clinic = await Clinic.findById(clinicId);
     if (!clinic) return res.status(404).json({ message: 'Clinic not found.' });
 
@@ -51,7 +90,10 @@ const updateService = async (req, res) => {
     if (!svc) return res.status(404).json({ message: 'Service not found.' });
 
     const allowed = ['name', 'description', 'durationMinutes', 'isAvailable'];
-    allowed.forEach((f) => { if (req.body[f] !== undefined) svc[f] = req.body[f]; });
+    allowed.forEach((f) => {
+      if (req.body[f] !== undefined) svc[f] = req.body[f];
+    });
+
     await clinic.save();
     return res.json(svc);
   } catch (err) {
@@ -59,15 +101,23 @@ const updateService = async (req, res) => {
   }
 };
 
-// DELETE /api/services/:clinicId/:serviceId — remove a service
+// DELETE /api/services/:clinicId/:serviceId
 const deleteService = async (req, res) => {
   try {
     const { clinicId, serviceId } = req.params;
-    const clinic = await Clinic.findById(clinicId);
-    if (!clinic) return res.status(404).json({ message: 'Clinic not found.' });
 
-    clinic.services = clinic.services.filter((s) => s._id.toString() !== serviceId);
-    await clinic.save();
+    if (isUnauthorizedClinic(req, clinicId)) {
+      return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    // Atomic removal to avoid race conditions
+    const clinic = await Clinic.findByIdAndUpdate(
+      clinicId,
+      { $pull: { services: { _id: serviceId } } },
+      { new: true }
+    );
+
+    if (!clinic) return res.status(404).json({ message: 'Clinic not found.' });
     return res.json({ message: 'Service removed.' });
   } catch (err) {
     return res.status(500).json({ message: 'Failed to delete service.' });

@@ -1,10 +1,10 @@
 /**
  * User model
  * Roles:
- *   - super_admin      → web app only
- *   - facility_admin   → web app only (scoped to one clinic)
- *   - staff            → tablet/mobile staff app only (scoped to one clinic)
- *   - patient          → mobile patient app only
+ *   - super_admin    → web app only
+ *   - facility_admin → web app only (scoped to one clinic)
+ *   - staff          → tablet/mobile staff app only (scoped to one clinic)
+ *   - patient        → mobile patient app only
  */
 const mongoose = require('mongoose');
 const bcrypt   = require('bcryptjs');
@@ -18,6 +18,7 @@ const UserSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+      index: true,
     },
     phone:    { type: String, trim: true, default: '' },
     password: { type: String, required: true, select: false },
@@ -25,6 +26,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       enum: ['super_admin', 'facility_admin', 'staff', 'patient'],
       default: 'patient',
+      index: true,
     },
     clinicId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -51,7 +53,7 @@ UserSchema.pre('save', async function (next) {
   }
 });
 
-// Compare a plain-text candidate password with the stored hash
+// Compare plain-text candidate password with stored hash
 UserSchema.methods.comparePassword = function (candidate) {
   return bcrypt.compare(candidate, this.password);
 };
@@ -60,6 +62,7 @@ UserSchema.methods.comparePassword = function (candidate) {
 UserSchema.methods.toSafeObject = function () {
   return {
     id:         this._id,
+    _id:        this._id,
     fullName:   this.fullName,
     email:      this.email,
     phone:      this.phone,

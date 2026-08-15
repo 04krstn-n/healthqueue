@@ -2,7 +2,8 @@
  * Patient Controller — admin view of patient records
  */
 const Patient = require('../models/Patient');
-const User    = require('../models/User');
+const User = require('../models/User');
+const { HttpStatus } = require('../config/config');
 
 // GET /api/patients
 const getPatients = async (req, res) => {
@@ -22,9 +23,9 @@ const getPatients = async (req, res) => {
         p.philHealthNumber?.toLowerCase().includes(s)
       );
     }
-    return res.json(patients);
+    return res.status(HttpStatus.OK).json({ success: true, data: patients });
   } catch (err) {
-    return res.status(500).json({ message: 'Failed to fetch patients.' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to fetch patients.' });
   }
 };
 
@@ -32,10 +33,10 @@ const getPatients = async (req, res) => {
 const getPatient = async (req, res) => {
   try {
     const patient = await Patient.findById(req.params.id).populate('user', 'email isActive createdAt');
-    if (!patient) return res.status(404).json({ message: 'Patient not found.' });
-    return res.json(patient);
+    if (!patient) return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: 'Patient not found.' });
+    return res.status(HttpStatus.OK).json({ success: true, data: patient });
   } catch (err) {
-    return res.status(500).json({ message: 'Failed to fetch patient.' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to fetch patient.' });
   }
 };
 
@@ -43,22 +44,20 @@ const getPatient = async (req, res) => {
 const createPatient = async (req, res) => {
   try {
     const { fullName, email, phone, dateOfBirth, gender, address, patientType, philHealthNumber, emergencyContact } = req.body;
-    if (!fullName) return res.status(400).json({ message: 'Full name is required.' });
+    if (!fullName) return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Full name is required.' });
 
-    // Optionally create a User account if email provided
     let userId = null;
     if (email) {
       const existing = await User.findOne({ email: email.toLowerCase().trim() });
       if (existing) {
-        // Link to existing user
         userId = existing._id;
       } else {
         const userDoc = await User.create({
           fullName: fullName.trim(),
-          email:    email.toLowerCase().trim(),
-          phone:    phone || '',
+          email: email.toLowerCase().trim(),
+          phone: phone || '',
           password: 'Patient@123',
-          role:     'patient',
+          role: 'patient',
           isVerified: true,
         });
         userId = userDoc._id;
@@ -66,37 +65,37 @@ const createPatient = async (req, res) => {
     }
 
     const patient = await Patient.create({
-      user:             userId,
-      fullName:         fullName.trim(),
-      email:            email || '',
-      phone:            phone || '',
-      dateOfBirth:      dateOfBirth || null,
-      gender:           gender || 'Other',
-      address:          address || '',
-      patientType:      patientType || 'Regular',
+      user: userId,
+      fullName: fullName.trim(),
+      email: email || '',
+      phone: phone || '',
+      dateOfBirth: dateOfBirth || null,
+      gender: gender || 'Other',
+      address: address || '',
+      patientType: patientType || 'Regular',
       philHealthNumber: philHealthNumber || '',
       emergencyContact: emergencyContact || {},
-      isActive:         true,
+      isActive: true,
     });
 
-    return res.status(201).json(patient);
+    return res.status(HttpStatus.CREATED).json({ success: true, data: patient });
   } catch (err) {
     console.error('createPatient error:', err.message);
-    return res.status(500).json({ message: err.message || 'Failed to create patient.' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: err.message || 'Failed to create patient.' });
   }
 };
 
 // PUT /api/patients/:id
 const updatePatient = async (req, res) => {
   try {
-    const allowed = ['fullName','email','phone','dateOfBirth','gender','address','patientType','philHealthNumber','emergencyContact','bloodType','allergies','medicalHistory','isActive'];
+    const allowed = ['fullName', 'email', 'phone', 'dateOfBirth', 'gender', 'address', 'patientType', 'philHealthNumber', 'emergencyContact', 'bloodType', 'allergies', 'medicalHistory', 'isActive'];
     const update = {};
     allowed.forEach(f => { if (req.body[f] !== undefined) update[f] = req.body[f]; });
     const patient = await Patient.findByIdAndUpdate(req.params.id, update, { new: true });
-    if (!patient) return res.status(404).json({ message: 'Patient not found.' });
-    return res.json(patient);
+    if (!patient) return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: 'Patient not found.' });
+    return res.status(HttpStatus.OK).json({ success: true, data: patient });
   } catch (err) {
-    return res.status(500).json({ message: 'Failed to update patient.' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to update patient.' });
   }
 };
 
@@ -104,11 +103,11 @@ const updatePatient = async (req, res) => {
 const deactivatePatient = async (req, res) => {
   try {
     const patient = await Patient.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
-    if (!patient) return res.status(404).json({ message: 'Patient not found.' });
+    if (!patient) return res.status(HttpStatus.NOT_FOUND).json({ success: false, message: 'Patient not found.' });
     if (patient.user) await User.findByIdAndUpdate(patient.user, { isActive: false });
-    return res.json({ message: 'Patient deactivated.' });
+    return res.status(HttpStatus.OK).json({ success: true, message: 'Patient deactivated.' });
   } catch (err) {
-    return res.status(500).json({ message: 'Failed to deactivate patient.' });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to deactivate patient.' });
   }
 };
 
