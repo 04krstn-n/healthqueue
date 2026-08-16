@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 
 const ServiceSchema = new mongoose.Schema(
   {
+    databaseName:    { type: String, required: true, unique: true, trim: true},
     name:            { type: String, required: true, trim: true },
     description:     { type: String, default: '' },
     durationMinutes: { type: Number, default: 30 },
