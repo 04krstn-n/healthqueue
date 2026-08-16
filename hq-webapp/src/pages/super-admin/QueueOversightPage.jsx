@@ -2,16 +2,22 @@ import { useState, useEffect, useCallback } from 'react'
 import { clinicsApi, queueApi } from '../../services/api'
 import styles from './super-admin.module.css'
 
-const STATUS_BADGE = { waiting:'badge-warn', serving:'badge-blue', done:'badge-green', completed:'badge-green', cancelled:'badge-gray', no_show:'badge-red' }
+const STATUS_BADGE = { 
+  waiting: 'badge-warn', 
+  serving: 'badge-blue', 
+  done: 'badge-green', 
+  completed: 'badge-green', 
+  cancelled: 'badge-gray', 
+  no_show: 'badge-red' 
+}
 
 export default function QueueOversightPage() {
   const [clinics,  setClinics]  = useState([])
-  const [queueMap, setQueueMap] = useState({})  // clinicId -> queue[]
+  const [queueMap, setQueueMap] = useState({})
   const [loading,  setLoading]  = useState(true)
   const [search,   setSearch]   = useState('')
   const [expanded, setExpanded] = useState(null)
   const [toast,    setToast]    = useState('')
-  const [metrics,  setMetrics]  = useState(null)
 
   const showToast = (m) => { setToast(m); setTimeout(() => setToast(''), 3000) }
 
@@ -19,39 +25,52 @@ export default function QueueOversightPage() {
     setLoading(true)
     try {
       const cr = await clinicsApi.list()
-      const list = cr.data || []
+      const cData = cr.data
+      const list = Array.isArray(cData) ? cData : Array.isArray(cData?.data) ? cData.data : Array.isArray(cData?.clinics) ? cData.clinics : []
       setClinics(list)
 
-      // Fetch queue metrics (totals across all clinics)
-      const mr = await queueApi.metrics().catch(() => ({ data: null }))
-      setMetrics(mr.data)
-
-      // Fetch queue for each clinic in parallel
       const results = await Promise.allSettled(
-        list.map(c => queueApi.list({ clinicId: c._id }).then(r => ({ id: c._id, queue: r.data || [] })))
+        list.map(c => {
+          const cid = c._id || c.id
+          return queueApi.list({ clinicId: cid }).then(r => {
+            const qData = r.data
+            const queue = Array.isArray(qData) ? qData : Array.isArray(qData?.data) ? qData.data : []
+            return { id: cid, queue }
+          })
+        })
       )
       const map = {}
       results.forEach(r => { if (r.status === 'fulfilled') map[r.value.id] = r.value.queue })
       setQueueMap(map)
-    } catch { showToast('Failed to load queue data') }
-    finally { setLoading(false) }
+    } catch { 
+      showToast('Failed to load queue data') 
+    } finally { 
+      setLoading(false) 
+    }
   }, [])
 
   useEffect(() => { load() }, [load])
 
   const act = async (fn, label) => {
-    try { await fn(); showToast(`${label} — done`); load() }
-    catch { showToast(`Failed: ${label}`) }
+    try { 
+      await fn()
+      showToast(`${label} — done`)
+      load() 
+    } catch { 
+      showToast(`Failed: ${label}`) 
+    }
   }
 
-  const filtered = clinics.filter(c =>
+  const safeClinics = Array.isArray(clinics) ? clinics : []
+  const filtered = safeClinics.filter(c =>
     !search || c.name?.toLowerCase().includes(search.toLowerCase()) || c.city?.toLowerCase().includes(search.toLowerCase())
   )
 
-  const totalWaiting  = Object.values(queueMap).flat().filter(q => q.status === 'waiting').length
-  const totalServing  = Object.values(queueMap).flat().filter(q => q.status === 'serving').length
-  const totalDone     = Object.values(queueMap).flat().filter(q => ['done','completed'].includes(q.status)).length
-  const totalAll      = Object.values(queueMap).flat().length
+  const allQueues = Object.values(queueMap).flat()
+  const totalWaiting  = allQueues.filter(q => q.status === 'waiting').length
+  const totalServing  = allQueues.filter(q => q.status === 'serving').length
+  const totalDone     = allQueues.filter(q => ['done','completed'].includes(q.status)).length
+  const totalAll      = allQueues.length
 
   return (
     <div className={styles.page}>
@@ -69,7 +88,6 @@ export default function QueueOversightPage() {
         </div>
       </div>
 
-      {/* Summary stats */}
       <div className={styles.statsRow}>
         <div className={`card ${styles.statCard}`}>
           <div className={styles.statLabel}>Total in Queue</div>
@@ -89,23 +107,22 @@ export default function QueueOversightPage() {
         </div>
       </div>
 
-      {/* Per-clinic accordion */}
       {loading
         ? <div style={{ padding:40, textAlign:'center', color:'var(--muted)' }}>Loading facility queues…</div>
         : filtered.length === 0
           ? <div style={{ padding:40, textAlign:'center', color:'var(--muted)' }}>No facilities found.</div>
           : filtered.map(clinic => {
-              const queue   = queueMap[clinic._id] || []
+              const cid     = clinic._id || clinic.id
+              const queue   = queueMap[cid] || []
               const waiting = queue.filter(q => q.status === 'waiting').length
               const cap     = clinic.maxQueueCapacity || 60
               const pct     = Math.min(100, Math.round((queue.length / cap) * 100))
-              const isOpen  = expanded === clinic._id
+              const isOpen  = expanded === cid
 
               return (
-                <div key={clinic._id} className="card" style={{ padding:0, overflow:'hidden' }}>
-                  {/* Clinic header row */}
+                <div key={cid} className="card" style={{ padding:0, overflow:'hidden', marginBottom: 12 }}>
                   <div style={{ padding:'14px 18px', display:'flex', alignItems:'center', gap:14, cursor:'pointer', borderBottom: isOpen ? '1px solid var(--border-lt)' : 'none' }}
-                    onClick={() => setExpanded(isOpen ? null : clinic._id)}>
+                    onClick={() => setExpanded(isOpen ? null : cid)}>
                     <div style={{ flex:1 }}>
                       <div style={{ fontWeight:700, color:'var(--text)', fontSize:14 }}>{clinic.name}</div>
                       <div style={{ fontSize:12, color:'var(--muted)' }}>{clinic.city}, {clinic.province}</div>
@@ -125,7 +142,6 @@ export default function QueueOversightPage() {
                     </div>
                   </div>
 
-                  {/* Expanded queue table */}
                   {isOpen && (
                     <div style={{ padding:'0 18px 14px' }}>
                       {queue.length === 0
@@ -139,7 +155,7 @@ export default function QueueOversightPage() {
                             </thead>
                             <tbody>
                               {queue.map(q => (
-                                <tr key={q._id}>
+                                <tr key={q._id || q.id}>
                                   <td><strong>{q.queueNumber}</strong></td>
                                   <td>{q.patientName || '—'}</td>
                                   <td>{q.serviceName || '—'}</td>
@@ -150,11 +166,11 @@ export default function QueueOversightPage() {
                                     <div style={{ display:'flex', gap:4 }}>
                                       {q.status === 'waiting' && (
                                         <button className="btn btn-outline" style={{ fontSize:11, padding:'3px 8px' }}
-                                          onClick={() => act(() => queueApi.call(q._id), 'Called patient')}>Call</button>
+                                          onClick={() => act(() => queueApi.call(q._id || q.id), 'Called patient')}>Call</button>
                                       )}
                                       {q.status === 'serving' && (
                                         <button className="btn btn-outline" style={{ fontSize:11, padding:'3px 8px', color:'var(--success)' }}
-                                          onClick={() => act(() => queueApi.complete(q._id), 'Completed')}>Done</button>
+                                          onClick={() => act(() => queueApi.complete(q._id || q.id), 'Completed')}>Done</button>
                                       )}
                                     </div>
                                   </td>

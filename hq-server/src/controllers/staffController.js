@@ -34,15 +34,30 @@ const getStaffMember = async (req, res) => {
       .populate('user', 'email isActive phone')
       .populate('clinic', 'name');
 
-    if (!member) return res.status(404).json({ message: 'Staff member not found.' });
-
-    if (req.user.role === 'facility_admin' && member.clinic?.toString() !== req.user.clinicId?.toString()) {
-      return res.status(403).json({ message: 'Access denied.' });
+    if (!member) {
+      return res.status(404).json({
+        message: 'Staff member not found.'
+      });
     }
 
-    return res.json(member);
+    // Facility admins can only access staff belonging to their clinic
+    if (
+      req.user.role === 'facility_admin' &&
+      member.clinic?._id?.toString() !== req.user.clinicId?.toString()
+    ) {
+      return res.status(403).json({
+        message: 'Access denied.'
+      });
+    }
+
+    return res.status(200).json(member);
+
   } catch (err) {
-    return res.status(500).json({ message: 'Failed to fetch staff member.' });
+    console.error('getStaffMember Error:', err);
+
+    return res.status(500).json({
+      message: 'Failed to fetch staff member.'
+    });
   }
 };
 

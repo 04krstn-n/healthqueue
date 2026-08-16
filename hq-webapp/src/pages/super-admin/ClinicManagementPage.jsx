@@ -1,134 +1,95 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { clinicsApi } from '../../services/api'
 import styles from './super-admin.module.css'
 
-const STATUS_BADGE = { open:'badge-green', active:'badge-green', busy:'badge-warn', closed:'badge-gray', maintenance:'badge-warn', inactive:'badge-gray' }
+const STATUS_BADGE = { active: 'badge-green', inactive: 'badge-gray', maintenance: 'badge-warn' }
+
 const EMPTY_FORM = {
-  name:'', city:'', errors:{}, address:'', province:'', contactNumber:'', email:'',
-  operatingHours:'8:00 AM - 5:00 PM', maxQueueCapacity:60,
-  acceptsWalkIn:true, acceptsAppointment:true, status:'open',
-  facilityType:'City Health Center', region:'NCR', services:[],
+  name: '', address: '', city: '', province: '',
+  contactNumber: '', email: '', operatingHours: '8:00 AM - 5:00 PM',
+  maxQueueCapacity: 60, acceptsWalkIn: true, acceptsAppointment: true, status: 'active'
 }
 
-export default function ClinicManagementPage() {
-  const [clinics,   setClinics]  = useState([])
-  const [loading,   setLoading]  = useState(true)
-  const [search,    setSearch]   = useState('')
-  const [statusFilter, setStatus]= useState('all')
-  const [modal,     setModal]    = useState(null)  // null | 'add' | 'edit' | 'view'
-  const [selected,  setSelected] = useState(null)
-  const [form,      setForm]     = useState(EMPTY_FORM)
-  const [saving,    setSaving]   = useState(false)
-  const [deleting,  setDeleting] = useState(null)
-  const [toast,     setToast]    = useState('')
+export default function ClinicsPage() {
+  const [clinics,    setClinics]    = useState([])
+  const [loading,    setLoading]    = useState(true)
+  const [showModal,  setShowModal]  = useState(false)
+  const [editing,    setEditing]    = useState(null)
+  const [form,       setForm]       = useState(EMPTY_FORM)
+  const [search,     setSearch]     = useState('')
+  const [toast,      setToast]      = useState('')
+  const [deleting,   setDeleting]   = useState(null)
 
   const showToast = (m) => { setToast(m); setTimeout(() => setToast(''), 3000) }
 
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true)
     clinicsApi.list()
-      .then(r => setClinics(r.data || []))
+      .then(r => {
+        const d = r.data
+        const list = Array.isArray(d) ? d : Array.isArray(d?.data) ? d.data : Array.isArray(d?.clinics) ? d.clinics : []
+        setClinics(list)
+      })
       .catch(() => showToast('Failed to load clinics'))
       .finally(() => setLoading(false))
-  }
-  useEffect(load, [])
+  }, [])
 
-  const openAdd  = () => { setSelected(null); setForm(EMPTY_FORM); setModal('add') }
-  const openEdit = (c) => { setSelected(c); setForm({ ...EMPTY_FORM, ...c }); setModal('edit') }
-  const openView = (c) => { setSelected(c); setModal('view') }
-  const close    = () => { setModal(null); setSelected(null) }
+  useEffect(() => { load() }, [load])
+
+  const openCreate = () => { setEditing(null); setForm(EMPTY_FORM); setShowModal(true) }
+  const openEdit   = (c) => { setEditing(c); setForm({ ...EMPTY_FORM, ...c }); setShowModal(true) }
 
   const save = async () => {
-    const errors = {}
-
-if (!form.name.trim()) {
-  errors.name = 'Clinic name is required'
-}
-
-if (!form.city.trim()) {
-  errors.city = 'City is required'
-}
-
-if (Object.keys(errors).length > 0) {
-  setForm(f => ({ ...f, errors }))
-  return
-}
-    setSaving(true)
+    if (!form.name || !form.address || !form.city) {
+      showToast('Name, address and city are required.'); return
+    }
     try {
-      if (modal === 'edit') await clinicsApi.update(selected._id, form)
-      else                  await clinicsApi.create(form)
-      showToast(modal === 'edit' ? 'Clinic updated' : 'Clinic added to the system')
-      close(); load()
-    } catch (e) { showToast(e?.response?.data?.message || 'Failed to save clinic') }
-    finally { setSaving(false) }
+      if (editing) {
+        await clinicsApi.update(editing._id || editing.id, form)
+        showToast('Clinic updated successfully')
+      } else {
+        await clinicsApi.create(form)
+        showToast('Clinic created successfully')
+      }
+      setShowModal(false)
+      load()
+    } catch (e) { 
+      showToast(e?.response?.data?.message || 'Failed to save clinic') 
+    }
   }
 
   const remove = async (id) => {
     try {
       await clinicsApi.delete(id)
-      showToast('Clinic removed'); setDeleting(null); load()
-    } catch (e) { showToast(e?.response?.data?.message || 'Cannot delete clinic with existing records') }
+      showToast('Clinic removed')
+      setDeleting(null)
+      load()
+    } catch (e) { 
+      showToast(e?.response?.data?.message || 'Failed to remove clinic') 
+    }
   }
-
-  const filtered = clinics.filter(c => {
-    const matchStatus = statusFilter === 'all' || c.status === statusFilter
-    const matchSearch = !search || c.name?.toLowerCase().includes(search.toLowerCase()) || c.city?.toLowerCase().includes(search.toLowerCase())
-    return matchStatus && matchSearch
-  })
 
   const F = (field, label, type='text', opts=null) => (
     <div className="form-group">
       <label className="form-label">{label}</label>
       {opts
-        ? <select className="form-select" value={form[field]??''} onChange={e=>setForm(f=>({...f,[field]:e.target.value}))}>
-            {opts.map(o=><option key={o.value??o} value={o.value??o}>{o.label??o}</option>)}
+        ? <select className="form-select" value={form[field] ?? ''} onChange={e=>setForm(f=>({...f,[field]:e.target.value}))}>
+            {opts.map(o=><option key={o.value ?? o} value={o.value ?? o}>{o.label ?? o}</option>)}
           </select>
         : type==='toggle'
-          ? <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}>
-              <input type="checkbox" checked={!!form[field]} onChange={e=>setForm(f=>({...f,[field]:e.target.checked}))} />
-              <span style={{fontSize:13,color:'var(--text-2)'}}>{label}</span>
-            </label>
-         : <>
-    <input
-      className="form-input"
-      type={type}
-      value={form[field] ?? ''}
-      style={{
-        border: form.errors?.[field]
-          ? '1px solid #DC2626'
-          : undefined
-      }}
-      onChange={e =>
-        setForm(f => ({
-          ...f,
-          [field]:
-            type === 'number'
-              ? Number(e.target.value)
-              : e.target.value,
-          errors: {
-            ...f.errors,
-            [field]: ''
-          }
-        }))
-      }
-    />
-
-    {form.errors?.[field] && (
-      <div
-        style={{
-          color:'#DC2626',
-          fontSize:12,
-          marginTop:6,
-          fontWeight:500,
-        }}
-      >
-        {form.errors[field]}
-      </div>
-    )}
-  </>
+          ? <Toggle value={!!form[field]} onChange={v=>setForm(f=>({...f,[field]:v}))} />
+          : <input className="form-input" type={type} value={form[field] ?? ''} onChange={e=>setForm(f=>({...f,[field]:type==='number'?Number(e.target.value):e.target.value}))} />
       }
     </div>
   )
+
+  const safeClinics = Array.isArray(clinics) ? clinics : []
+  const filtered = safeClinics.filter(c =>
+    !search || c.name?.toLowerCase().includes(search.toLowerCase()) ||
+    c.city?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const totalActive = safeClinics.filter(c => c.status === 'active').length
 
   return (
     <div className={styles.page}>
@@ -137,191 +98,130 @@ if (Object.keys(errors).length > 0) {
       <div className={styles.header}>
         <div>
           <div className={styles.title}>Clinic Management</div>
-          <div className={styles.sub}>Manage all registered health facilities</div>
+          <div className={styles.sub}>Manage all registered health facilities on the platform</div>
         </div>
-        <div className={styles.toolbar}>
-          <input className="form-input" style={{width:200}} placeholder="Search clinics…"
-            value={search} onChange={e=>setSearch(e.target.value)} />
-          <select className="form-select" style={{width:130}} value={statusFilter} onChange={e=>setStatus(e.target.value)}>
-            <option value="all">All Status</option>
-            <option value="open">Open</option>
-            <option value="active">Active</option>
-            <option value="closed">Closed</option>
-            <option value="maintenance">Maintenance</option>
-          </select>
-          <button className="btn btn-primary" onClick={openAdd}>+ Add Clinic</button>
-        </div>
+        <button className="btn btn-primary btn-sm" onClick={openCreate}>
+          Add Clinic
+        </button>
       </div>
 
-      {/* Stats */}
-      <div className={styles.statsRow} style={{gridTemplateColumns:'repeat(3,1fr)'}}>
-        <div className={`card ${styles.statCard}`}>
+      <div className={styles.statsRow}>
+        <div className={"card " + styles.statCard}>
           <div className={styles.statLabel}>Total Clinics</div>
-          <div className={styles.statValue}>{clinics.length}</div>
+          <div className={styles.statValue}>{safeClinics.length}</div>
         </div>
-        <div className={`card ${styles.statCard}`}>
-          <div className={styles.statLabel}>Active / Open</div>
-          <div className={styles.statValue} style={{color:'#16A34A'}}>{clinics.filter(c=>['active','open'].includes(c.status)).length}</div>
+        <div className={"card " + styles.statCard}>
+          <div className={styles.statLabel}>Active</div>
+          <div className={styles.statValue} style={{color:'#16A34A'}}>{totalActive}</div>
         </div>
-        <div className={`card ${styles.statCard}`}>
-          <div className={styles.statLabel}>Total Services</div>
-          <div className={styles.statValue}>{clinics.reduce((s,c)=>s+(c.services?.length||0),0)}</div>
+        <div className={"card " + styles.statCard}>
+          <div className={styles.statLabel}>Inactive</div>
+          <div className={styles.statValue} style={{color:'#6B7280'}}>{safeClinics.length - totalActive}</div>
         </div>
       </div>
 
-      {/* Clinic cards */}
-      {loading
-        ? <div style={{padding:40,textAlign:'center',color:'var(--muted)'}}>Loading clinics…</div>
-        : filtered.length === 0
-          ? <div style={{padding:40,textAlign:'center',color:'var(--muted)'}}>No clinics found.</div>
-          : <div className={styles.clinicGrid}>
-              {filtered.map(c => (
-                <div key={c._id} className={`card ${styles.clinicCard}`}>
-                  <div className={styles.clinicHead}>
-                    <div>
-                      <div className={styles.clinicName}>{c.name}</div>
-                      <div className={styles.clinicMeta}>
-                        <span>{c.facilityType || 'Health Clinic'}</span>
-                        <span>{c.city}, {c.province}</span>
-                        {c.contactNumber && <span>{c.contactNumber}</span>}
-                        {c.operatingHours && <span>{c.operatingHours}</span>}
-                      </div>
-                    </div>
-                    <span className={`badge ${STATUS_BADGE[c.status]||'badge-gray'}`}>{c.status}</span>
-                  </div>
-
-                  {/* Services from DB */}
-                  {(c.services||[]).length > 0 && (
-                    <div style={{display:'flex',flexWrap:'wrap',gap:4,marginTop:4}}>
-                      {c.services.slice(0,4).map((s,i)=>(
-                        <span key={i} className="badge badge-blue" style={{fontSize:10}}>
-                          {typeof s === 'string' ? s : s.name}
-                        </span>
-                      ))}
-                      {c.services.length > 4 && (
-                        <span className="badge badge-gray" style={{fontSize:10}}>+{c.services.length-4} more</span>
-                      )}
-                    </div>
-                  )}
-
-                  <div className={styles.clinicStats}>
-                    <div className={styles.cStat}>
-                      <div className={styles.cStatVal}>{c.services?.length || 0}</div>
-                      <div className={styles.cStatLbl}>Services</div>
-                    </div>
-                    <div className={styles.cStat}>
-                      <div className={styles.cStatVal}>{c.maxQueueCapacity || 60}</div>
-                      <div className={styles.cStatLbl}>Max Queue</div>
-                    </div>
-                    <div className={styles.cStat}>
-                      <div className={styles.cStatVal}>{c.acceptsWalkIn ? 'Yes' : 'No'}</div>
-                      <div className={styles.cStatLbl}>Walk-in</div>
-                    </div>
-                  </div>
-
-                  <div className={styles.clinicActions}>
-                    <button className="btn btn-outline" style={{flex:1,fontSize:12}} onClick={()=>openView(c)}>View</button>
-                    <button className="btn btn-outline" style={{flex:1,fontSize:12}} onClick={()=>openEdit(c)}>Edit</button>
-                    <button className="btn" style={{flex:0,fontSize:12,padding:'6px 10px',color:'var(--error)',background:'var(--error-lt)',border:'none'}}
-                      onClick={()=>setDeleting(c._id)}>Delete</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-      }
-
-      {/* Add/Edit Modal */}
-      {(modal==='add'||modal==='edit') && (
-        <div className="modal-overlay" onClick={close}>
-          <div className="modal" style={{maxWidth:560}} onClick={e=>e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="modal-title">{modal==='edit'?'Edit Clinic':'Add New Clinic'}</span>
-              <button className="modal-close" onClick={close}>✕</button>
-            </div>
-            <div className="modal-body">
-              <div className={styles.formGrid2}>
-                {F('name','Clinic Name *')}
-                {F('facilityType','Facility Type','text',[
-                  'City Health Center','Rural Health Unit','Barangay Health Center',
-                  'Government Hospital','Private Clinic','Lying-in Clinic',
-                ])}
-                {F('address','Address')}
-                {F('city','City *')}
-                {F('province','Province')}
-                {F('region','Region')}
-                {F('contactNumber','Contact Number')}
-                {F('email','Email')}
-                {F('operatingHours','Operating Hours')}
-                {F('maxQueueCapacity','Max Queue Capacity','number')}
-                {F('status','Status','text',['open','closed','maintenance','active','inactive'])}
-              </div>
-              <div className="form-group" style={{display:'flex',gap:20,marginTop:4}}>
-                {F('acceptsWalkIn','Accepts Walk-in','toggle')}
-                {F('acceptsAppointment','Accepts Appointment','toggle')}
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-outline" onClick={close}>Cancel</button>
-              <button className="btn btn-primary" onClick={save} disabled={saving}>
-                {saving ? 'Saving…' : modal==='edit'?'Save Changes':'Add Clinic'}
-              </button>
-            </div>
-          </div>
+      <div className={styles.toolbar}>
+        <div className="search-bar" style={{flex:1,maxWidth:320}}>
+          <input placeholder="Search clinic name or city..." value={search} onChange={e=>setSearch(e.target.value)} />
         </div>
-      )}
+        <button className="btn btn-outline btn-sm" onClick={load}>Refresh</button>
+      </div>
 
-      {/* View Modal */}
-      {modal==='view' && selected && (
-        <div className="modal-overlay" onClick={close}>
-          <div className="modal" style={{maxWidth:480}} onClick={e=>e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="modal-title">{selected.name}</span>
-              <button className="modal-close" onClick={close}>✕</button>
+      <div className="card">
+        {loading
+          ? <div style={{padding:40,textAlign:'center',color:'var(--muted)'}}>Loading clinics…</div>
+          : <div className="table-wrap" style={{border:'none',borderRadius:0}}>
+              <table>
+                <thead>
+                  <tr><th>Clinic Name</th><th>Location</th><th>Contact</th><th>Capacity</th><th>Walk-in</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                  {filtered.length === 0
+                    ? <tr><td colSpan="7" style={{textAlign:'center',padding:32,color:'var(--muted)'}}>No clinics found</td></tr>
+                    : filtered.map(c => (
+                      <tr key={c._id || c.id}>
+                        <td>
+                          <div style={{fontWeight:600,fontSize:13}}>{c.name}</div>
+                          <div style={{fontSize:11,color:'var(--muted)'}}>{c.email}</div>
+                        </td>
+                        <td style={{fontSize:13}}>{c.city}{c.province ? ', '+c.province : ''}</td>
+                        <td style={{fontSize:13}}>{c.contactNumber}</td>
+                        <td style={{fontSize:13}}>{c.maxQueueCapacity} patients</td>
+                        <td>
+                          <span className={'badge '+(c.acceptsWalkIn?'badge-green':'badge-gray')}>{c.acceptsWalkIn?'Yes':'No'}</span>
+                        </td>
+                        <td>
+                          <span className={'badge '+(STATUS_BADGE[c.status]||'badge-gray')}>{c.status||'active'}</span>
+                        </td>
+                        <td>
+                          <div style={{display:'flex',gap:4}}>
+                            <button className="btn btn-outline btn-sm" onClick={()=>openEdit(c)}>Edit</button>
+                            <button className="btn btn-sm" style={{background:'var(--error-lt)',color:'var(--error)'}} onClick={()=>setDeleting(c._id || c.id)}>Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  }
+                </tbody>
+              </table>
             </div>
-            <div className="modal-body">
-              <p><strong>Type:</strong> {selected.facilityType}</p>
-              <p><strong>Address:</strong> {selected.address}</p>
-              <p><strong>City/Province:</strong> {selected.city}, {selected.province}</p>
-              <p><strong>Contact:</strong> {selected.contactNumber}</p>
-              <p><strong>Hours:</strong> {selected.operatingHours}</p>
-              <p><strong>Status:</strong> <span className={`badge ${STATUS_BADGE[selected.status]||'badge-gray'}`}>{selected.status}</span></p>
-              <p><strong>Max Queue:</strong> {selected.maxQueueCapacity}</p>
-              <p><strong>Walk-in:</strong> {selected.acceptsWalkIn ? 'Yes' : 'No'} &nbsp; <strong>Appointment:</strong> {selected.acceptsAppointment ? 'Yes' : 'No'}</p>
-              <div style={{marginTop:12}}>
-                <strong>Services ({(selected.services||[]).length}):</strong>
-                {(selected.services||[]).length === 0
-                  ? <p style={{color:'var(--muted)',fontSize:13}}>No services listed.</p>
-                  : <ul style={{marginTop:6,paddingLeft:18}}>
-                      {selected.services.map((s,i)=>(
-                        <li key={i} style={{fontSize:13,color:'var(--text-2)',marginBottom:3}}>
-                          {typeof s==='string' ? s : `${s.name}${s.durationMinutes ? ` (${s.durationMinutes} min)` : ''}`}
-                        </li>
-                      ))}
-                    </ul>
-                }
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-outline" onClick={close}>Close</button>
-              <button className="btn btn-primary" onClick={()=>{close();openEdit(selected)}}>Edit</button>
-            </div>
-          </div>
-        </div>
-      )}
+        }
+      </div>
 
-      {/* Delete confirm */}
       {deleting && (
         <div className="modal-overlay" onClick={()=>setDeleting(null)}>
-          <div className="modal" style={{maxWidth:360}} onClick={e=>e.stopPropagation()}>
-            <div className="modal-header"><span className="modal-title">Confirm Delete</span></div>
-            <div className="modal-body"><p>Are you sure you want to remove this clinic? This action cannot be undone.</p></div>
+          <div className="modal" style={{maxWidth:400}} onClick={e=>e.stopPropagation()}>
+            <div className="modal-header"><div className="modal-title">Confirm Delete</div></div>
+            <div className="modal-body"><p style={{fontSize:14,color:'var(--text-2)'}}>Are you sure you want to remove this clinic? This action cannot be undone.</p></div>
             <div className="modal-footer">
               <button className="btn btn-outline" onClick={()=>setDeleting(null)}>Cancel</button>
-              <button className="btn" style={{background:'var(--error)',color:'#fff',border:'none'}} onClick={()=>remove(deleting)}>Delete</button>
+              <button className="btn btn-sm" style={{background:'var(--error)',color:'#fff'}} onClick={()=>remove(deleting)}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showModal && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowModal(false)}>
+          <div className="modal" style={{maxWidth:560}}>
+            <div className="modal-header">
+              <div className="modal-title">{editing?'Edit Clinic':'Add New Clinic'}</div>
+              <button className="modal-close" onClick={()=>setShowModal(false)}>×</button>
+            </div>
+            <div className="modal-body" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 16px'}}>
+              <div style={{gridColumn:'1/-1'}}>{F('name','Clinic Name')}</div>
+              {F('address','Address')}
+              {F('city','City')}
+              {F('province','Province')}
+              {F('contactNumber','Contact Number')}
+              {F('email','Email','email')}
+              {F('operatingHours','Operating Hours')}
+              {F('maxQueueCapacity','Max Queue Capacity','number')}
+              {F('status','Status','text',[{value:'active',label:'Active'},{value:'inactive',label:'Inactive'},{value:'maintenance',label:'Maintenance'}])}
+              <div className="form-group">
+                <label className="form-label">Accepts Walk-in</label>
+                <Toggle value={!!form.acceptsWalkIn} onChange={v=>setForm(f=>({...f,acceptsWalkIn:v}))} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Accepts Appointments</label>
+                <Toggle value={!!form.acceptsAppointment} onChange={v=>setForm(f=>({...f,acceptsAppointment:v}))} />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={()=>setShowModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={save}>{editing?'Save Changes':'Create Clinic'}</button>
             </div>
           </div>
         </div>
       )}
     </div>
+  )
+}
+
+function Toggle({ value, onChange }) {
+  return (
+    <button style={{width:44,height:24,borderRadius:99,background:value?'#2563EB':'var(--border)',border:'none',cursor:'pointer',position:'relative',marginTop:4}} onClick={()=>onChange(!value)}>
+      <span style={{position:'absolute',top:3,left:value?22:3,width:18,height:18,background:'#fff',borderRadius:'50%',transition:'left .2s',display:'block',boxShadow:'0 1px 3px rgba(0,0,0,.2)'}} />
+    </button>
   )
 }

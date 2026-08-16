@@ -1,43 +1,46 @@
-import { useState, useEffect } from 'react'
-import api from '../../services/api'
+import { useState, useEffect, useCallback } from 'react'
+import { systemConfigApi } from '../../services/api'
 import styles from './super-admin.module.css'
 
 const GROUP_LABELS = { General:'General Settings', Queue:'Queue Settings', Chatbot:'Chatbot Settings' }
-const VALUE_TYPES  = { boolean: 'toggle', number: 'number', string: 'text' }
 
 export default function SystemConfigPage() {
-  const [configs,  setConfigs]  = useState([])
-  const [loading,  setLoading]  = useState(true)
-  const [saving,   setSaving]   = useState(false)
-  const [toast,    setToast]    = useState('')
-  const [edits,    setEdits]    = useState({})  // key -> new value
+  const [configs, setConfigs] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState('')
+  const [edits, setEdits] = useState({})
 
   const showToast = (m) => { setToast(m); setTimeout(() => setToast(''), 3000) }
 
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true)
-    api.get('/api/config')
+    systemConfigApi.get()
       .then(r => {
-        const data = r.data || []
+        const d = r.data
+        const data = Array.isArray(d) ? d : Array.isArray(d?.data) ? d.data : Array.isArray(d?.configs) ? d.configs : []
         setConfigs(data)
-        // seed edits with current values
         const e = {}
         data.forEach(c => { e[c.key] = c.value })
         setEdits(e)
       })
       .catch(() => showToast('Failed to load system config'))
       .finally(() => setLoading(false))
-  }
-  useEffect(load, [])
+  }, [])
+
+  useEffect(() => { load() }, [load])
 
   const save = async (cfg) => {
     setSaving(true)
     try {
-      await api.put(`/api/config/${cfg._id}`, { value: edits[cfg.key] })
+      await systemConfigApi.update(cfg.key || cfg._id, edits[cfg.key])
       showToast(`"${cfg.label || cfg.key}" updated`)
       load()
-    } catch { showToast('Failed to save config') }
-    finally { setSaving(false) }
+    } catch {
+      showToast('Failed to save config')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const groups = [...new Set(configs.map(c => c.group || 'General'))]
@@ -89,7 +92,7 @@ export default function SystemConfigPage() {
                   {GROUP_LABELS[group] || group}
                 </div>
                 {configs.filter(c => (c.group || 'General') === group).map(cfg => (
-                  <div key={cfg._id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 0', borderBottom:'1px solid var(--border-lt)' }}>
+                  <div key={cfg._id || cfg.key} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 0', borderBottom:'1px solid var(--border-lt)' }}>
                     <div style={{ flex:1 }}>
                       <div style={{ fontWeight:600, color:'var(--text)', fontSize:13 }}>{cfg.label || cfg.key}</div>
                       {cfg.description && <div style={{ fontSize:12, color:'var(--muted)', marginTop:2 }}>{cfg.description}</div>}

@@ -1,73 +1,117 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import { authApi } from '../services/api'
 
+const STORAGE_KEYS = {
+  TOKEN: 'hq_token',
+  USER: 'hq_user',
+}
+
+const ALLOWED_ROLES = ['super_admin', 'facility_admin']
+
+// --- Storage Utilities ---
+const getStoredUser = () => {
+  try {
+    const cached = localStorage.getItem(STORAGE_KEYS.USER)
+    return cached ? JSON.parse(cached) : null
+  } catch {
+    return null
+  }
+}
+
+const setSession = (token, user) => {
+  if (token) localStorage.setItem(STORAGE_KEYS.TOKEN, token)
+  if (user) localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user))
+}
+
+const clearSession = () => {
+  localStorage.removeItem(STORAGE_KEYS.TOKEN)
+  localStorage.removeItem(STORAGE_KEYS.USER)
+}
+
+// --- Context Definition ---
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user,    setUser]    = useState(null)
+  // Lazy initial state prevents render flashing
+  const [user, setUser] = useState(() => getStoredUser())
   const [loading, setLoading] = useState(true)
 
-  // Restore session on mount — verify token is still valid
+  // Restore and verify session on mount
   useEffect(() => {
-    const token  = localStorage.getItem('hq_token')
-    const cached = localStorage.getItem('hq_user')
+    let isMounted = true
+    const token = localStorage.getItem(STORAGE_KEYS.TOKEN)
 
     if (!token) {
       setLoading(false)
       return
     }
 
-    // Optimistically restore from cache so ProtectedRoute doesn't flash
-    if (cached) {
-      try { setUser(JSON.parse(cached)) } catch (_) {}
-    }
-
     authApi.me()
       .then((res) => {
-        setUser(res.data.user)
-        localStorage.setItem('hq_user', JSON.stringify(res.data.user))
+        if (!isMounted) return
+        const freshUser = res.data.user
+        setUser(freshUser)
+        setSession(null, freshUser)
       })
       .catch((err) => {
-        // Only clear session on explicit 401 (invalid/expired token)
-        // Network errors or 5xx should NOT log the user out
-        const status = err?.response?.status
-        if (status === 401) {
-          localStorage.removeItem('hq_token')
-          localStorage.removeItem('hq_user')
+        if (!isMounted) return
+        // Invalidate session strictly on 401 Unauthorized
+        if (err?.response?.status === 401) {
+          clearSession()
           setUser(null)
         }
-        // Otherwise keep the cached user — server may be temporarily unavailable
       })
-      .finally(() => setLoading(false))
+      .finally(() => {
+        if (isMounted) setLoading(false)
+      })
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
-  // login() — call API, store token, set user
-  const login = async (email, password) => {
+  // Action: Login
+  const login = useCallback(async (email, password) => {
     const res = await authApi.login(email, password)
-    const { token, user: u } = res.data
+    const { token, user: userData } = res.data
 
-    if (!['super_admin', 'facility_admin'].includes(u.role)) {
+    if (!ALLOWED_ROLES.includes(userData.role)) {
       throw new Error('Access denied. This portal is for System Administrator or Facility Admin only.')
     }
 
-    localStorage.setItem('hq_token', token)
-    localStorage.setItem('hq_user', JSON.stringify(u))
-    setUser(u)
-    setLoading(false)   // ensure loading is false so ProtectedRoute lets us through
-    return u
-  }
+    setSession(token, userData)
+    setUser(userData)
+    setLoading(false)
+    return userData
+  }, [])
 
-  const logout = () => {
-    localStorage.removeItem('hq_token')
-    localStorage.removeItem('hq_user')
+  // Action: Logout
+  const logout = useCallback(() => {
+    clearSession()
     setUser(null)
-  }
+  }, [])
+
+  // Memoize context value to avoid unnecessary downstream re-renders
+  const value = useMemo(() => ({
+    user,
+    loading,
+    isAuthenticated: !!user,
+    login,
+    logout,
+  }), [user, loading, login, logout])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )
 }
 
-export const useAuth = () => useContext(AuthContext)
+// Custom hook with consumer boundary check
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
+}
