@@ -191,7 +191,7 @@ const getMyPatientProfile = async (req, res) => {
 // PUT /api/users/me/patient
 const updateMyPatientProfile = async (req, res) => {
   try {
-    const allowed = ['fullName', 'dob', 'age', 'gender', 'phone', 'email', 'address', 'philHealthNumber', 'hmoProvider', 'patientType', 'medicalNotes'];
+    const allowed = ['fullName', 'dateOfBirth', 'age', 'gender', 'phone', 'email', 'address', 'philHealthNumber', 'hmoProvider', 'patientType', 'medicalNotes'];
     const update = {};
     allowed.forEach((field) => {
       if (req.body[field] !== undefined) update[field] = req.body[field];
@@ -234,6 +234,28 @@ const changePassword = async (req, res) => {
   } catch (err) {
     console.error('changePassword:', err.message);
     return res.status(500).json({ message: 'Failed to change password.' });
+  }
+};
+
+exports.getUsers = async (req, res) => {
+  try {
+    const { clinicId, role } = req.query;
+    const filter = {};
+
+    if (clinicId) filter.clinicId = clinicId;
+
+    // Exclude facility admin / super admin accounts from staff queries
+    filter.role = { $nin: ['superadmin', 'facility_admin'] };
+
+    // Or exclude the current user's ID
+    if (req.user?._id) {
+      filter._id = { $ne: req.user._id };
+    }
+
+    const users = await User.find(filter).select('-password');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 

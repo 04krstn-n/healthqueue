@@ -52,7 +52,7 @@ const register = async (req, res) => {
       fullName: user.fullName,
       email: user.email,
       phone: user.phone,
-      dob: dateOfBirth ? new Date(dateOfBirth) : null,
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
       patientType: 'Regular',
     });
 

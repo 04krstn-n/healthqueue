@@ -121,6 +121,7 @@ app.use(errorHandler);
 // ─── Start Server ─────────────────────────────────────────────────────────────
 server.listen(PORT, () => {
   console.log(`HealthQueue+ API running on port ${PORT} [${NODE_ENV}]`);
+   console.log(`Server running with WebSockets on port ${PORT}`);
 });
 
 module.exports = { app, server };

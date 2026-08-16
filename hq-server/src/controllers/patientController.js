@@ -43,7 +43,7 @@ const getPatient = async (req, res) => {
 // POST /api/patients — admin creates a patient record directly
 const createPatient = async (req, res) => {
   try {
-    const { fullName, email, phone, dateOfBirth, gender, address, patientType, philHealthNumber, emergencyContact } = req.body;
+    const { fullName, email, phone, dateOfBirth, gender, address, patientType, philHealthNumber } = req.body;
     if (!fullName) return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: 'Full name is required.' });
 
     let userId = null;
@@ -74,7 +74,6 @@ const createPatient = async (req, res) => {
       address: address || '',
       patientType: patientType || 'Regular',
       philHealthNumber: philHealthNumber || '',
-      emergencyContact: emergencyContact || {},
       isActive: true,
     });
 
@@ -88,7 +87,7 @@ const createPatient = async (req, res) => {
 // PUT /api/patients/:id
 const updatePatient = async (req, res) => {
   try {
-    const allowed = ['fullName', 'email', 'phone', 'dateOfBirth', 'gender', 'address', 'patientType', 'philHealthNumber', 'emergencyContact', 'bloodType', 'allergies', 'medicalHistory', 'isActive'];
+    const allowed = ['fullName', 'email', 'phone', 'dateOfBirth', 'gender', 'address', 'patientType', 'philHealthNumber', 'bloodType', 'allergies', 'medicalHistory', 'isActive'];
     const update = {};
     allowed.forEach(f => { if (req.body[f] !== undefined) update[f] = req.body[f]; });
     const patient = await Patient.findByIdAndUpdate(req.params.id, update, { new: true });

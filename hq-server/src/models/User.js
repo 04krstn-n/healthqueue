@@ -37,6 +37,11 @@ const UserSchema = new mongoose.Schema(
     otpExpires: { type: Date,    default: null },
     isVerified: { type: Boolean, default: false },
     isActive:   { type: Boolean, default: true },
+    gender: { 
+    type: String, 
+    enum: ['Male', 'Female', 'Other', 'Prefer not to say'], 
+    default: 'Male' 
+  },
   },
   { timestamps: true }
 );
